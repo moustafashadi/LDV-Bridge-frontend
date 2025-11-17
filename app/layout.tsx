@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
+import { Auth0ProviderWithNavigate } from "@/components/providers/auth0-provider"
 import { ToastProvider } from "@/components/notifications/toast-provider"
 import "./globals.css"
 
@@ -20,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
-        <ToastProvider>{children}</ToastProvider>
+        <Auth0ProviderWithNavigate>
+          <ToastProvider>{children}</ToastProvider>
+        </Auth0ProviderWithNavigate>
       </body>
     </html>
   )
