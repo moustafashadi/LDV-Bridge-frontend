@@ -4,8 +4,9 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, X, Bell, Search, LogOut } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -34,7 +35,17 @@ interface MainNavProps {
 
 export function MainNav({ title, navItems, userRole, userName, userInitials, notificationCount = 0 }: MainNavProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const handleLogout = () => {
+    logout({
+      logoutParams: {
+        returnTo: window.location.origin + '/auth/login',
+      },
+    })
+  }
 
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-700 bg-slate-900/95 backdrop-blur">
@@ -115,7 +126,10 @@ export function MainNav({ title, navItems, userRole, userName, userInitials, not
                 <DropdownMenuItem className="text-slate-300 cursor-pointer">Profile Settings</DropdownMenuItem>
                 <DropdownMenuItem className="text-slate-300 cursor-pointer">Preferences</DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-slate-700" />
-                <DropdownMenuItem className="text-red-400 cursor-pointer flex items-center gap-2">
+                <DropdownMenuItem 
+                  className="text-red-400 cursor-pointer flex items-center gap-2"
+                  onClick={handleLogout}
+                >
                   <LogOut className="w-4 h-4" />
                   Sign Out
                 </DropdownMenuItem>

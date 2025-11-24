@@ -20,14 +20,23 @@ export interface AppSyncedEvent {
 class WebSocketClient {
   private socket: Socket | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = 3; // Reduced from 5
   private reconnectDelay = 1000; // Start with 1 second
   private isIntentionalDisconnect = false;
+  private isWebSocketEnabled = false; // Feature flag
 
   /**
    * Connect to WebSocket server
    */
   connect(token?: string): void {
+    // Check if WebSocket is enabled via environment variable
+    this.isWebSocketEnabled = process.env.NEXT_PUBLIC_ENABLE_WEBSOCKET === 'true';
+    
+    if (!this.isWebSocketEnabled) {
+      console.log('[WebSocket] WebSocket disabled via environment variable');
+      return;
+    }
+
     if (this.socket?.connected) {
       console.log('[WebSocket] Already connected');
       return;
@@ -120,11 +129,16 @@ class WebSocketClient {
 
     // Connection error
     this.socket.on('connect_error', (error) => {
-      console.error('[WebSocket] Connection error:', error.message);
       this.reconnectAttempts++;
 
+      // Only log first error and max attempts to reduce console spam
+      if (this.reconnectAttempts === 1) {
+        console.warn('[WebSocket] Connection failed. WebSocket features disabled.');
+      }
+
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.error('[WebSocket] Max reconnection attempts reached');
+        console.warn('[WebSocket] Reconnection attempts exhausted. Real-time updates disabled.');
+        this.disconnect(); // Stop trying
       }
     });
 
@@ -151,14 +165,17 @@ class WebSocketClient {
       // For other reasons, socket.io will attempt to reconnect automatically
     });
 
-    // Reconnection attempt
+    // Reconnection attempt (reduced logging)
     this.socket.io.on('reconnect_attempt', (attempt) => {
-      console.log(`[WebSocket] Reconnection attempt ${attempt}`);
+      // Silent - only log on first and last attempt
+      if (attempt === 1 || attempt >= this.maxReconnectAttempts) {
+        console.log(`[WebSocket] Reconnection attempt ${attempt}/${this.maxReconnectAttempts}`);
+      }
     });
 
     // Reconnection failed
     this.socket.io.on('reconnect_failed', () => {
-      console.error('[WebSocket] Reconnection failed');
+      console.warn('[WebSocket] Reconnection failed - real-time updates disabled');
     });
 
     // Successfully reconnected

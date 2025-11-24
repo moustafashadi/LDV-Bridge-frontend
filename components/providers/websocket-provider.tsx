@@ -29,12 +29,11 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     const connectWebSocket = async () => {
       try {
         const token = await getAccessTokenSilently();
-        console.log('[WebSocketProvider] Connecting WebSocket');
+        console.log('[WebSocketProvider] Attempting WebSocket connection');
         wsClient.connect(token);
       } catch (error) {
-        console.error('[WebSocketProvider] Failed to get auth token:', error);
-        // Connect without token (backend should handle this)
-        wsClient.connect();
+        console.warn('[WebSocketProvider] WebSocket connection skipped:', error);
+        // Don't throw - WebSocket is optional for now
       }
     };
 

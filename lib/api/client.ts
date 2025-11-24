@@ -45,9 +45,15 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     // Handle specific error statuses
     if (error.response?.status === 401) {
-      // Unauthorized - redirect to login or refresh token
-      console.error('Unauthorized access - redirecting to login');
-      // Could trigger logout here
+      // Only log/redirect for non-public endpoints
+      // Public endpoints like setup-instructions should not trigger this
+      const url = error.config?.url || '';
+      const isPublicEndpoint = url.includes('/setup-instructions') || url.includes('/callback');
+      
+      if (!isPublicEndpoint) {
+        console.error('Unauthorized access - redirecting to login');
+        // Could trigger logout here
+      }
     } else if (error.response?.status === 403) {
       // Forbidden
       console.error('Access forbidden');
