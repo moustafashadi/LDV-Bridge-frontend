@@ -31,49 +31,60 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         const token = await getAccessTokenSilently();
         console.log('[WebSocketProvider] Attempting WebSocket connection');
         wsClient.connect(token);
+
+        // Setup event listeners AFTER connecting (when socket is initialized)
+        // Small delay to ensure socket is ready
+        setTimeout(() => {
+          setupEventListeners();
+        }, 100);
       } catch (error) {
         console.warn('[WebSocketProvider] WebSocket connection skipped:', error);
         // Don't throw - WebSocket is optional for now
       }
     };
 
-    connectWebSocket();
-
     // Setup event listeners for cache invalidation
-    const unsubscribeStatusChanged = wsClient.onConnectionStatusChanged(
-      (event: ConnectionStatusChangedEvent) => {
-        console.log('[WebSocketProvider] Connection status changed:', event);
+    let unsubscribeStatusChanged: (() => void) | undefined;
+    let unsubscribeAppSynced: (() => void) | undefined;
 
-        // Invalidate status queries for the specific platform
+    const setupEventListeners = () => {
+      unsubscribeStatusChanged = wsClient.onConnectionStatusChanged(
+        (event: ConnectionStatusChangedEvent) => {
+          console.log('[WebSocketProvider] Connection status changed:', event);
+
+          // Invalidate status queries for the specific platform
+          const platform = event.platform.toLowerCase();
+          queryClient.invalidateQueries({
+            queryKey: [...connectorKeys.all, platform, 'status'],
+          });
+
+          // If status is CONNECTED, also invalidate lists to fetch fresh data
+          if (event.status === 'CONNECTED') {
+            queryClient.invalidateQueries({
+              queryKey: [...connectorKeys.all, platform],
+            });
+          }
+        }
+      );
+
+      unsubscribeAppSynced = wsClient.onAppSynced((event: AppSyncedEvent) => {
+        console.log('[WebSocketProvider] App synced:', event);
+
+        // Invalidate app lists for the specific platform
         const platform = event.platform.toLowerCase();
         queryClient.invalidateQueries({
-          queryKey: [...connectorKeys.all, platform, 'status'],
+          queryKey: [...connectorKeys.all, platform, 'apps'],
         });
-
-        // If status is CONNECTED, also invalidate lists to fetch fresh data
-        if (event.status === 'CONNECTED') {
-          queryClient.invalidateQueries({
-            queryKey: [...connectorKeys.all, platform],
-          });
-        }
-      }
-    );
-
-    const unsubscribeAppSynced = wsClient.onAppSynced((event: AppSyncedEvent) => {
-      console.log('[WebSocketProvider] App synced:', event);
-
-      // Invalidate app lists for the specific platform
-      const platform = event.platform.toLowerCase();
-      queryClient.invalidateQueries({
-        queryKey: [...connectorKeys.all, platform, 'apps'],
       });
-    });
+    };
+
+    connectWebSocket();
 
     // Cleanup on unmount
     return () => {
       console.log('[WebSocketProvider] Cleaning up WebSocket connection');
-      unsubscribeStatusChanged();
-      unsubscribeAppSynced();
+      unsubscribeStatusChanged?.();
+      unsubscribeAppSynced?.();
       wsClient.disconnect();
     };
   }, [isAuthenticated, getAccessTokenSilently, queryClient]);

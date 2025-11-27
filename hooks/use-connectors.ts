@@ -6,7 +6,7 @@ import {
   getConnectorStatus,
   testConnectorConnection,
   disconnectConnector,
-} from '../lib/api/connectors';
+} from '../lib/api/connectors-api';
 import type {
   ConnectionStatusResponse,
   PowerAppsConnectResponse,

@@ -27,23 +27,41 @@ export interface PowerAppsEnvironment {
   name: string;
   location: string;
   type: string;
+  properties: {
+    displayName: string;
+    description?: string;
+    environmentSku?: string;
+    isDefault?: boolean;
+  };
 }
 
 export interface PowerAppsApp {
+  name: string; // Unique identifier
   id: string;
-  name: string;
-  displayName: string;
-  description?: string;
-  createdTime: string;
-  lastModifiedTime: string;
-  environment: string;
-  owner?: string;
+  type: string;
+  properties: {
+    displayName: string;
+    description?: string;
+    createdTime: string;
+    lastModifiedTime: string;
+    owner: {
+      id: string;
+      displayName?: string;
+      email?: string;
+    };
+    appVersion?: string;
+    isFeaturedApp?: boolean;
+    bypassConsent?: boolean;
+    environment?: {
+      id: string;
+      name: string;
+    };
+  };
 }
 
 export interface PowerAppsAppDetail extends PowerAppsApp {
-  version?: string;
-  appOpenUri?: string;
-  appPlayUri?: string;
+  // Inherits all properties from PowerAppsApp
+  // Additional detail fields can be added here if backend provides them
 }
 
 // Mendix Types
@@ -64,22 +82,39 @@ export interface MendixConnectResponse {
 }
 
 export interface MendixProject {
-  projectId: string;
+  id: string;
   name: string;
   description?: string;
+  projectId: string;
+  appId: string;
+  url?: string;
 }
 
 export interface MendixApp {
-  appId: string;
+  id: string;
   name: string;
-  projectId: string;
-  repositoryUrl?: string;
   description?: string;
+  createdAt: string;
+  modifiedAt: string;
+  metadata: {
+    projectId: string;
+    appId: string;
+    url?: string;
+  };
 }
 
 export interface MendixAppDetail extends MendixApp {
-  teamServerUrl?: string;
-  revision?: string;
+  metadata: {
+    projectId: string;
+    appId: string;
+    url?: string;
+    environments?: Array<{
+      Status: string;
+      Url: string;
+      Mode?: string;
+      ProductionLevel?: string;
+    }>;
+  };
 }
 
 // Common Types

@@ -26,15 +26,16 @@ export default function RootLayout({
     <html lang="en">
       <body className={`font-sans antialiased`}>
         <Auth0ProviderWithNavigate>
-          <AuthTokenManager />
-          <QueryProvider>
-            <WebSocketProvider>
-              <ToastProvider>
-                {children}
-                <Toaster />
-              </ToastProvider>
-            </WebSocketProvider>
-          </QueryProvider>
+          <AuthTokenManager>
+            <QueryProvider>
+              <WebSocketProvider>
+                <ToastProvider>
+                  {children}
+                  <Toaster />
+                </ToastProvider>
+              </WebSocketProvider>
+            </QueryProvider>
+          </AuthTokenManager>
         </Auth0ProviderWithNavigate>
       </body>
     </html>

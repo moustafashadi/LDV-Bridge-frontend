@@ -189,31 +189,31 @@ export const mendixApi = {
    * List Mendix projects
    */
   async listProjects(): Promise<MendixProject[]> {
-    const response = await apiClient.get<MendixProject[]>(
+    const response = await apiClient.get<{ success: boolean; count: number; projects: MendixProject[] }>(
       `${CONNECTORS_BASE}/mendix/projects`
     );
-    return response.data;
+    return response.data.projects; // Extract projects array from wrapped response
   },
 
   /**
    * List Mendix apps (optionally filtered by project)
    */
   async listApps(projectId?: string): Promise<MendixApp[]> {
-    const response = await apiClient.get<MendixApp[]>(
+    const response = await apiClient.get<{ success: boolean; count: number; apps: MendixApp[] }>(
       `${CONNECTORS_BASE}/mendix/apps`,
       { params: projectId ? { projectId } : undefined }
     );
-    return response.data;
+    return response.data.apps; // Extract apps array from wrapped response
   },
 
   /**
    * Get Mendix app details by ID
    */
   async getApp(appId: string): Promise<MendixAppDetail> {
-    const response = await apiClient.get<MendixAppDetail>(
+    const response = await apiClient.get<{ success: boolean; app: MendixAppDetail }>(
       `${CONNECTORS_BASE}/mendix/apps/${appId}`
     );
-    return response.data;
+    return response.data.app; // Extract app from wrapped response
   },
 
   /**
