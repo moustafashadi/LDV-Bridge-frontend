@@ -1,10 +1,8 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { MainNav } from "@/components/layout/main-nav"
 import { PageHeader } from "@/components/layout/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import {
   BarChart,
   Bar,
@@ -23,14 +21,11 @@ import {
 import { DemoToastButton } from "@/components/layout/demo-toast-button"
 
 export default function AdminDashboard() {
-  const router = useRouter()
   const navItems = [
     { label: "Analytics", href: "/admin" },
-    { label: "Users", href: "/admin/users" },
-    { label: "Join Requests", href: "/admin/join-requests" },
-    { label: "Invitation Codes", href: "/admin/invitation-codes" },
     { label: "Policies", href: "/admin/policies" },
     { label: "Connectors", href: "/admin/connectors" },
+    { label: "Users", href: "/admin/users" },
     { label: "Compliance", href: "/admin/compliance" },
   ]
 

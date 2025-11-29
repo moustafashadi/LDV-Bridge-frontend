@@ -198,6 +198,22 @@ class WebSocketClient {
   }
 
   /**
+   * Subscribe to notification events
+   */
+  onNotification(callback: (notification: any) => void): () => void {
+    if (!this.socket) {
+      console.warn('[WebSocket] Not connected. Call connect() first.');
+      return () => {};
+    }
+
+    this.socket.on('notification', callback);
+
+    return () => {
+      this.socket?.off('notification', callback);
+    };
+  }
+
+  /**
    * Subscribe to any custom event
    */
   on(event: string, callback: (...args: any[]) => void): () => void {

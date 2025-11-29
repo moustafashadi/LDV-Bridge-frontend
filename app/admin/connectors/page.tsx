@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MainNav } from '@/components/layout/main-nav';
+import { RoleLayout } from '@/components/layout/role-layout';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -219,14 +219,6 @@ function ConnectorCard({
 export default function PlatformConnectors() {
   const [mendixModalOpen, setMendixModalOpen] = useState(false);
 
-  const navItems = [
-    { label: 'Analytics', href: '/admin' },
-    { label: 'Policies', href: '/admin/policies' },
-    { label: 'Connectors', href: '/admin/connectors' },
-    { label: 'Users', href: '/admin/users' },
-    { label: 'Compliance', href: '/admin/compliance' },
-  ];
-
   // PowerApps
   const { data: powerAppsStatus, isLoading: powerAppsLoading, refetch: refetchPowerApps } = usePowerAppsStatus();
   const { mutate: connectPowerApps, isPending: powerAppsConnecting } = useConnectPowerApps();
@@ -244,15 +236,7 @@ export default function PlatformConnectors() {
   };
 
   return (
-    <>
-      <MainNav
-        title="Admin Console"
-        navItems={navItems}
-        userRole="Administrator"
-        userName="Admin User"
-        userInitials="AU"
-      />
-
+    <RoleLayout>
       <PageHeader
         title="Platform Connectors"
         actions={
@@ -337,6 +321,6 @@ export default function PlatformConnectors() {
 
       {/* Mendix Connection Modal */}
       <MendixConnectModal open={mendixModalOpen} onOpenChange={setMendixModalOpen} />
-    </>
+    </RoleLayout>
   );
 }
