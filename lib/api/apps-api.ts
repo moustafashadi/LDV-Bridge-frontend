@@ -113,7 +113,7 @@ export const revokeAppAccess = (appId: string, userId: string) =>
  * Get all apps a specific user has access to
  */
 export const getUserApps = (userId: string) =>
-  apiClient.get<UserAppAccess[]>(`/users/${userId}/apps`);
+  apiClient.get<UserAppAccess[]>(`/apps/users/${userId}/apps`);
 
 /**
  * Get all apps the current user has access to

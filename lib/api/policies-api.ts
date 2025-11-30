@@ -53,7 +53,7 @@ export async function updatePolicy(
   id: string,
   data: UpdatePolicyDto
 ): Promise<Policy> {
-  const response = await apiClient.put<Policy>(`${BASE_PATH}/${id}`, data);
+  const response = await apiClient.patch<Policy>(`${BASE_PATH}/${id}`, data);
   return response.data;
 }
 
