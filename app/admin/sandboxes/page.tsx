@@ -298,6 +298,6 @@ export default function AdminSandboxesPage() {
           </CardContent>
         </Card>
       </main>
-    </ProtectedRoute>
+    </>
   );
 }
