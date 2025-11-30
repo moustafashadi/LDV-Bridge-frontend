@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth0 } from '@auth0/auth0-react';
 import { onboardingApi } from '@/lib/api';
 import { getRoleBasedRedirect } from '@/lib/redirect-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,15 +12,17 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 type OnboardingFlow = 'select' | 'create_org' | 'join_org' | 'use_code';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, loginWithRedirect } = useAuth0();
   const [flow, setFlow] = useState<OnboardingFlow>('select');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsReauth, setNeedsReauth] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [organizations, setOrganizations] = useState<any[]>([]);
 
@@ -44,8 +46,19 @@ export default function OnboardingPage() {
         } else if (status.status === 'pending_approval') {
           router.push('/pending-approval');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error checking onboarding status:', err);
+        
+        // If 401 Unauthorized or consent required, user needs to re-authenticate
+        if (err.response?.status === 401 || err.message?.includes('consent') || err.message?.includes('login_required')) {
+          console.log('Auth token expired or consent required. User needs to log in again.');
+          setNeedsReauth(true);
+          setError('Your session has expired. Please log in again to continue.');
+          return;
+        }
+        
+        // For other errors, show error message
+        setError(err.response?.data?.message || 'Failed to check onboarding status. Please try logging in again.');
       }
     };
 
@@ -148,6 +161,47 @@ export default function OnboardingPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show re-authentication UI if session expired
+  if (needsReauth) {
+    return (
+      <div className="container max-w-2xl mx-auto py-16 px-4">
+        <Card className="border-destructive">
+          <CardHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <AlertCircle className="w-8 h-8 text-destructive" />
+              <CardTitle>Session Expired</CardTitle>
+            </div>
+            <CardDescription>
+              Your authentication session has expired. Please log in again to continue.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                This can happen if you've been inactive for a while or if your browser cleared the session.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Click the button below to securely log in again through Auth0.
+              </p>
+            </div>
+            <Button 
+              onClick={() => loginWithRedirect()}
+              className="w-full"
+              size="lg"
+            >
+              Log In Again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

@@ -29,10 +29,21 @@ export function AuthTokenManager({ children }: { children?: React.ReactNode }) {
           setAuthToken(token);
           console.log('✅ Auth token set in API client');
           setIsTokenReady(true);
-        } catch (error) {
+        } catch (error: any) {
           console.error('❌ Error getting access token:', error);
-          setAuthToken(null);
-          setIsTokenReady(true); // Allow render even on error to show error UI
+          
+          // Check if error is due to consent required or login required
+          if (error.error === 'consent_required' || error.error === 'login_required') {
+            console.log('🔄 Session expired or consent required. User needs to re-authenticate.');
+            setAuthToken(null);
+            setIsTokenReady(true);
+            // Let the app render so it can show login button or redirect
+          } else {
+            // Other errors
+            console.error('Unexpected auth error:', error);
+            setAuthToken(null);
+            setIsTokenReady(true);
+          }
         }
       } else if (!isAuthenticated && !isLoading) {
         setAuthToken(null);
