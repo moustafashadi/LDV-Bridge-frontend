@@ -51,7 +51,7 @@ export function NotificationItem({
       <div className="flex items-start gap-3">
         {/* Unread indicator */}
         {!notification.isRead && (
-          <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+          <div className="h-2 w-2 rounded-full bg-primary mt-2 shrink-0" />
         )}
 
         {/* Content */}

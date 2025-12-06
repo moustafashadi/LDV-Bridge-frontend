@@ -296,7 +296,7 @@ export default function PlatformConnectors() {
           <Card className="bg-blue-950/30 border-blue-800">
             <CardContent className="p-6">
               <div className="flex gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
                 <div className="space-y-2">
                   <h3 className="font-semibold text-white">About Platform Connectors</h3>
                   <p className="text-sm text-slate-300">

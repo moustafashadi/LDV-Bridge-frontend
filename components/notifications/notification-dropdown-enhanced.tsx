@@ -272,7 +272,7 @@ export function NotificationDropdownEnhanced({
                       <div key={request.id} className="p-4 hover:bg-accent/50 transition-colors">
                         <div className="flex items-start gap-3">
                           {/* Avatar */}
-                          <Avatar className="h-10 w-10 flex-shrink-0">
+                          <Avatar className="h-10 w-10 shrink-0">
                             <AvatarFallback className="bg-primary text-primary-foreground">
                               {getInitials(request.user?.name, request.user?.email || 'Unknown')}
                             </AvatarFallback>
@@ -289,7 +289,7 @@ export function NotificationDropdownEnhanced({
                                   {request.user?.email || 'No email'}
                                 </p>
                               </div>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground f-0">
                                 <Clock className="h-3 w-3" />
                                 {formatDate(request.createdAt)}
                               </div>
@@ -448,7 +448,7 @@ function JoinRequestsModal({
               <div key={request.id} className="border rounded-lg p-4">
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
-                  <Avatar className="h-12 w-12 flex-shrink-0">
+                  <Avatar className="h-12 w-12 f-0">
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {getInitials(request.user?.name, request.user?.email || 'Unknown')}
                     </AvatarFallback>
@@ -465,7 +465,7 @@ function JoinRequestsModal({
                           {request.user?.email || 'No email'}
                         </p>
                       </div>
-                      <Badge variant="outline" className="flex-shrink-0">
+                      <Badge variant="outline" className="f-0">
                         {getRoleIcon(request.requestedRole)}
                         <span className="ml-1">{getRoleLabel(request.requestedRole)}</span>
                       </Badge>

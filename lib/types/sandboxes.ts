@@ -60,6 +60,7 @@ export interface CreateSandboxRequest {
   type: SandboxType;
   expiresAt?: string;
   region?: string;
+  sourceAppId?: string; // For cloning existing apps
 }
 
 /**

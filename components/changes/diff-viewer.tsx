@@ -90,7 +90,7 @@ export function DiffViewer({ diff, title = 'Changes' }: DiffViewerProps) {
             >
               <div className="flex items-start gap-3">
                 {/* Operation Icon */}
-                <span className="font-mono font-bold text-sm flex-shrink-0 w-6">
+                <span className="font-mono font-bold text-sm shrink-0 w-6">
                   {getOperationIcon(operation.op)}
                 </span>
 

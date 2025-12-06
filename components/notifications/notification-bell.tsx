@@ -140,7 +140,7 @@ export function NotificationBell({ userId, organizationId, className }: Notifica
                 onClick={() => markAsRead(notification.id)}
               >
                 <div className="flex gap-3 w-full">
-                  <div className="text-2xl flex-shrink-0">
+                  <div className="text-2xl shrink-0">
                     {getIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -153,7 +153,7 @@ export function NotificationBell({ userId, organizationId, className }: Notifica
                         {notification.title}
                       </p>
                       {!notification.read && (
-                        <span className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0 mt-1" />
+                        <span className="h-2 w-2 bg-blue-500 rounded-full shrink-0 mt-1" />
                       )}
                     </div>
                     <p className="text-xs text-slate-400 line-clamp-2">
