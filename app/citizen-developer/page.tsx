@@ -93,6 +93,7 @@ export default function CitizenDeveloperHome() {
     { label: "My Sandbox", href: "/citizen-developer" },
     { label: "My Changes", href: "/citizen-developer/changes" },
     { label: "Request Review", href: "/citizen-developer/review" },
+    { label: "Connectors", href: "/citizen-developer/connectors" },
     { label: "Learning Hub", href: "/citizen-developer/learning" },
   ]
 

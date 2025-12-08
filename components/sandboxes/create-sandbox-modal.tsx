@@ -173,6 +173,18 @@ export function CreateSandboxModal({ open, onOpenChange, onSuccess }: CreateSand
             </TabsList>
 
             <TabsContent value="new" className="space-y-4 mt-4">
+              {/* Mendix Warning */}
+              {formData.platform === SandboxPlatform.MENDIX && (
+                <Alert className="bg-amber-500/10 border-amber-500/50">
+                  <Info className="h-4 w-4 text-amber-500" />
+                  <AlertDescription className="text-amber-200 text-sm">
+                    <strong>Note:</strong> Creating new Mendix apps via API may require additional permissions. 
+                    We recommend selecting an existing app from the <strong>"Clone Existing"</strong> tab, 
+                    which will use that app's free environment as your sandbox.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Platform Selection */}
               <div className="space-y-2">
                 <Label htmlFor="platform" className="text-slate-200">
@@ -282,6 +294,18 @@ export function CreateSandboxModal({ open, onOpenChange, onSuccess }: CreateSand
             </TabsContent>
 
             <TabsContent value="clone" className="space-y-4 mt-4">
+              {/* Mendix Clone Info */}
+              {formData.platform === SandboxPlatform.MENDIX && (
+                <Alert className="bg-blue-500/10 border-blue-500/50">
+                  <Info className="h-4 w-4 text-blue-400" />
+                  <AlertDescription className="text-blue-200 text-sm">
+                    <strong>Mendix Sandbox:</strong> This will use the selected app's free environment 
+                    as your sandbox. Mendix does not support app cloning via API. To create a true copy, 
+                    please duplicate the app in Mendix Portal first.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Platform Selection (Clone) */}
               <div className="space-y-2">
                 <Label htmlFor="clone-platform" className="text-slate-200">

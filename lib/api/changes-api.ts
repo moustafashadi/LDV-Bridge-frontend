@@ -107,3 +107,35 @@ export async function getMyChanges(
 ): Promise<PaginatedChangesResponse> {
   return getChanges({ ...filters, authorId: userId });
 }
+
+/**
+ * Manually sync changes from a sandbox environment
+ */
+export async function syncSandbox(
+  sandboxId: string
+): Promise<{ success: boolean; message: string; changeCount: number }> {
+  const response = await apiClient.post<{ success: boolean; message: string; changeCount: number }>(
+    `${BASE_PATH}/sync/${sandboxId}`
+  );
+  return response.data;
+}
+
+/**
+ * Undo a change (soft delete)
+ */
+export async function undoChange(changeId: string): Promise<Change> {
+  const response = await apiClient.post<Change>(
+    `${BASE_PATH}/${changeId}/undo`
+  );
+  return response.data;
+}
+
+/**
+ * Restore a deleted change
+ */
+export async function restoreChange(changeId: string): Promise<Change> {
+  const response = await apiClient.post<Change>(
+    `${BASE_PATH}/${changeId}/restore`
+  );
+  return response.data;
+}

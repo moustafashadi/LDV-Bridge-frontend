@@ -1,19 +1,42 @@
 "use client"
 
-import { useState } from "react"
+import { use, useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { MainNav } from "@/components/layout/main-nav"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronLeft, RotateCcw, Trash2, CheckCircle } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ChevronLeft, RotateCcw, Trash2, CheckCircle, RefreshCw, ExternalLink, AlertCircle } from "lucide-react"
+import { useSandboxDetail } from "@/lib/hooks/use-sandbox-detail"
+import { useSandboxChanges } from "@/lib/hooks/use-sandbox-changes"
+import { ChangeType } from "@/lib/types/changes"
 
-export default function SandboxWorkspace({ params }: { params: { id: string } }) {
-  const [changes] = useState([
-    { type: "modified", name: "Submit Button", detail: "Color changed" },
-    { type: "modified", name: "Email Field", detail: "Validation rule added" },
-    { type: "modified", name: "Dashboard Chart", detail: "Filter changed" },
-    { type: "added", name: "Export to Excel", detail: "New button component" },
-  ])
+export default function SandboxWorkspace({ params }: { params: Promise<{ id: string }> }) {
+  const router = useRouter()
+  const { id } = use(params)
+  const { sandbox, loading: sandboxLoading, error: sandboxError } = useSandboxDetail(id)
+  const { 
+    changes, 
+    groupedChanges, 
+    changeStats,
+    loading: changesLoading, 
+    syncing,
+    syncChanges,
+    undoChange,
+    discardAllChanges
+  } = useSandboxChanges({ 
+    sandboxId: id,
+    appId: sandbox?.appId,
+    enableRealTime: true
+  })
+
+  const [embedFailed, setEmbedFailed] = useState(false)
+  const [isDiscarding, setIsDiscarding] = useState(false)
+
+  // Get the last change for undo functionality
+  const lastChange = changes.length > 0 ? changes[0] : null
 
   const navItems = [
     { label: "My Sandbox", href: "/citizen-developer" },
@@ -21,6 +44,63 @@ export default function SandboxWorkspace({ params }: { params: { id: string } })
     { label: "Request Review", href: "/citizen-developer/review" },
     { label: "Learning Hub", href: "/citizen-developer/learning" },
   ]
+
+  const handleUndoLastChange = async () => {
+    if (lastChange) {
+      await undoChange(lastChange.id)
+    }
+  }
+
+  const handleDiscardAllChanges = async () => {
+    setIsDiscarding(true)
+    await discardAllChanges()
+    setIsDiscarding(false)
+  }
+
+  const handleSubmitReview = () => {
+    router.push('/citizen-developer/review')
+  }
+
+  // Loading state
+  if (sandboxLoading || changesLoading) {
+    return (
+      <>
+        <MainNav
+          title="Citizen Developer Portal"
+          navItems={navItems}
+          userRole="Citizen Developer"
+          userName="Sarah K."
+          userInitials="SK"
+        />
+        <div className="container mx-auto px-6 py-8">
+          <Skeleton className="h-96 w-full bg-slate-800" />
+        </div>
+      </>
+    )
+  }
+
+  // Error state
+  if (sandboxError || !sandbox) {
+    return (
+      <>
+        <MainNav
+          title="Citizen Developer Portal"
+          navItems={navItems}
+          userRole="Citizen Developer"
+          userName="Sarah K."
+          userInitials="SK"
+        />
+        <div className="container mx-auto px-6 py-8">
+          <Alert className="bg-red-900/50 border-red-800">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load sandbox. Please try again.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </>
+    )
+  }
 
   return (
     <>
@@ -42,10 +122,24 @@ export default function SandboxWorkspace({ params }: { params: { id: string } })
               </Button>
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-white">Sandbox: Marketing Campaign Tracker (Draft)</h1>
-              <p className="text-sm text-slate-400">Last auto-saved: 2 min ago</p>
+              <h1 className="text-xl font-bold text-white">
+                Sandbox: {sandbox.name}
+              </h1>
+              <p className="text-sm text-slate-400">
+                Platform: {sandbox.platform} • Status: {sandbox.status}
+              </p>
             </div>
           </div>
+          <Button 
+            onClick={syncChanges} 
+            disabled={syncing}
+            variant="outline"
+            size="sm"
+            className="border-slate-600 text-slate-300"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync Changes'}
+          </Button>
         </div>
       </div>
 
@@ -56,30 +150,90 @@ export default function SandboxWorkspace({ params }: { params: { id: string } })
             <Card className="bg-slate-800 border-slate-700 mb-6">
               <CardHeader>
                 <CardTitle className="text-white">Your Changes</CardTitle>
+                <CardDescription>
+                  {changeStats.total} total change{changeStats.total !== 1 ? 's' : ''}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-semibold text-slate-300 mb-2">Modified Components (3)</p>
-                  <ul className="space-y-1 text-sm text-slate-400">
-                    {changes
-                      .filter((c) => c.type === "modified")
-                      .map((c, i) => (
-                        <li key={i}>
-                          ✏️ {c.name} → {c.detail}
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-300 mb-2">New Components (1)</p>
-                  <ul className="space-y-1 text-sm text-slate-400">
-                    {changes
-                      .filter((c) => c.type === "added")
-                      .map((c, i) => (
-                        <li key={i}>➕ {c.name}</li>
-                      ))}
-                  </ul>
-                </div>
+                {changeStats.modified > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-slate-300 mb-2">
+                      Modified ({changeStats.modified})
+                    </p>
+                    <ul className="space-y-1 text-sm text-slate-400">
+                      {changes
+                        .filter((c) => c.changeType === ChangeType.UPDATE)
+                        .slice(0, 5)
+                        .map((c) => (
+                          <li key={c.id}>
+                            ✏️ {c.title}
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {changeStats.added > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-slate-300 mb-2">
+                      Added ({changeStats.added})
+                    </p>
+                    <ul className="space-y-1 text-sm text-slate-400">
+                      {changes
+                        .filter((c) => c.changeType === ChangeType.CREATE)
+                        .slice(0, 5)
+                        .map((c) => (
+                          <li key={c.id}>➕ {c.title}</li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+
+                {changeStats.deleted > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-slate-300 mb-2">
+                      Deleted ({changeStats.deleted})
+                    </p>
+                    <ul className="space-y-1 text-sm text-slate-400">
+                      {changes
+                        .filter((c) => c.changeType === ChangeType.DELETE)
+                        .slice(0, 5)
+                        .map((c) => (
+                          <li key={c.id}>🗑️ {c.title}</li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+
+                {changeStats.total === 0 && (
+                  <p className="text-sm text-slate-500">No changes yet</p>
+                )}
+
+                {/* Grouped Changes Section */}
+                {Object.keys(groupedChanges).length > 0 && (
+                  <div className="pt-4 border-t border-slate-700">
+                    <p className="text-sm font-semibold text-slate-300 mb-2">
+                      By Component
+                    </p>
+                    {Object.entries(groupedChanges).map(([component, componentChanges]) => (
+                      <details key={component} className="mb-2">
+                        <summary className="text-sm text-slate-400 cursor-pointer hover:text-white">
+                          📦 {component} ({componentChanges.length})
+                        </summary>
+                        <ul className="ml-4 mt-1 space-y-1 text-xs text-slate-500">
+                          {componentChanges.map((c) => (
+                            <li key={c.id}>
+                              {c.changeType === ChangeType.UPDATE && '✏️ '}
+                              {c.changeType === ChangeType.CREATE && '➕ '}
+                              {c.changeType === ChangeType.DELETE && '🗑️ '}
+                              {c.title}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -114,35 +268,107 @@ export default function SandboxWorkspace({ params }: { params: { id: string } })
             <Card className="bg-slate-800 border-slate-700 mb-6">
               <CardHeader>
                 <CardTitle className="text-white">App Preview</CardTitle>
-                <CardDescription>Changes are highlighted in yellow</CardDescription>
+                <CardDescription>
+                  {sandbox.environmentUrl ? (
+                    embedFailed ? 'Click below to open in platform' : 'Live sandbox environment'
+                  ) : (
+                    'Waiting for environment provisioning...'
+                  )}
+                </CardDescription>
+                
+                {/* Mendix Studio Pro Notice */}
+                {sandbox.platform === 'MENDIX' && sandbox.environmentUrl && (
+                  <Alert className="mt-4 bg-blue-500/10 border-blue-500/50">
+                    <AlertCircle className="h-4 w-4 text-blue-400" />
+                    <AlertDescription className="text-blue-200 text-sm">
+                      <strong>Note:</strong> To edit this Mendix app, click "Open in MENDIX" below to access the Developer Portal, 
+                      then click <strong>"Edit in Studio Pro"</strong>. Mendix Studio (web) has been merged into Studio Pro (desktop).
+                      {' '}
+                      <a 
+                        href="https://marketplace.mendix.com/link/studiopro/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="underline hover:text-blue-100"
+                      >
+                        Download Studio Pro
+                      </a>
+                    </AlertDescription>
+                  </Alert>
+                )}
               </CardHeader>
               <CardContent>
-                <div className="bg-slate-900 rounded-lg p-8 min-h-96 flex items-center justify-center border border-slate-700">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">📱</div>
-                    <p className="text-slate-400">App preview would render here</p>
-                    <p className="text-sm text-slate-500 mt-2">Connected to PowerApps platform</p>
-                    <Button className="mt-4 bg-blue-600 hover:bg-blue-700">Open in PowerApps</Button>
-                  </div>
+                <div className="bg-slate-900 rounded-lg min-h-96 border border-slate-700 overflow-hidden">
+                  {sandbox.environmentUrl && !embedFailed ? (
+                    <iframe
+                      src={sandbox.environmentUrl}
+                      className="w-full h-96"
+                      sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                      onError={() => setEmbedFailed(true)}
+                      title={`${sandbox.name} Preview`}
+                    />
+                  ) : sandbox.environmentUrl && embedFailed ? (
+                    <div className="flex items-center justify-center h-96">
+                      <div className="text-center space-y-4">
+                        <div className="text-6xl mb-4">📱</div>
+                        <Alert className="bg-yellow-900/30 border-yellow-800">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>
+                            Unable to embed preview. Use the button below to open directly.
+                          </AlertDescription>
+                        </Alert>
+                        <Button 
+                          className="bg-blue-600 hover:bg-blue-700"
+                          onClick={() => window.open(sandbox.environmentUrl, '_blank')}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Open in {sandbox.platform}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-96">
+                      <div className="text-center">
+                        <div className="text-6xl mb-4">⏳</div>
+                        <p className="text-slate-400">Environment provisioning...</p>
+                        <p className="text-sm text-slate-500 mt-2">
+                          Status: {sandbox.provisioningStatus}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Action Bar */}
-            <div className="flex gap-3 justify-between">
+            <div className="flex gap-3 justify-between flex-wrap">
               <div className="flex gap-3">
-                <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white bg-transparent">
+                <Button 
+                  variant="outline" 
+                  className="border-slate-600 text-slate-300 hover:text-white bg-transparent"
+                  onClick={handleUndoLastChange}
+                  disabled={!lastChange || syncing}
+                >
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Undo Last Change
                 </Button>
-                <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white bg-transparent">
+                <Button 
+                  variant="outline" 
+                  className="border-slate-600 text-red-400 hover:text-red-300 bg-transparent"
+                  onClick={handleDiscardAllChanges}
+                  disabled={changes.length === 0 || isDiscarding || syncing}
+                >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Discard All Changes
+                  {isDiscarding ? 'Discarding...' : 'Discard All Changes'}
                 </Button>
               </div>
-              <Button className="bg-green-600 hover:bg-green-700">
+              <Button 
+                className="bg-green-600 hover:bg-green-700"
+                onClick={handleSubmitReview}
+                disabled={changes.length === 0}
+              >
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Ready to Submit for Review
+                Submit for Review ({changeStats.total})
               </Button>
             </div>
           </div>

@@ -32,7 +32,8 @@ apiClient.interceptors.request.use(
     // Debug: Log request details in development
     if (process.env.NODE_ENV === 'development') {
       const hasAuth = !!config.headers['Authorization'];
-      console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url} ${hasAuth ? '🔒' : '🔓'}`);
+      const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
+      console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${fullUrl} ${hasAuth ? '🔒' : '🔓'}`);
     }
     return config;
   },
@@ -89,10 +90,13 @@ apiClient.interceptors.response.use(
       console.error('User does not have permission to access this resource');
       
     } else if (error.response?.status === 404) {
-      // 404 is common for "not connected" scenarios, only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.debug(`❓ ${method} ${url} - Not Found (404)`);
-      }
+      // Log full URL for 404 errors to help with debugging
+      const fullUrl = error.config?.baseURL ? `${error.config.baseURL}${url}` : url;
+      console.warn(`❓ ${method} ${fullUrl} - Not Found (404)`);
+      console.warn('Check that:');
+      console.warn('1. The backend server is running on the correct port');
+      console.warn('2. The endpoint exists in the backend controller');
+      console.warn('3. The URL path is correct');
       
     } else if (error.response?.status === 500) {
       console.error(`💥 ${method} ${url} - Server Error (500)`);

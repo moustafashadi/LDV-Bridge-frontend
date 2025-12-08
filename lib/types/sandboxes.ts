@@ -45,6 +45,7 @@ export interface Sandbox {
   environmentId?: string;
   environmentUrl?: string;
   region?: string;
+  appId?: string; // Linked application ID
   expiresAt?: string;
   createdAt: string;
   updatedAt: string;
