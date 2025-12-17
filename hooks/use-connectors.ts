@@ -205,7 +205,7 @@ export function usePowerAppsApps(
   return useQuery({
     queryKey: connectorKeys.powerAppsApps(environmentId),
     queryFn: () => powerAppsApi.listApps(environmentId),
-    enabled: status?.isConnected === true,
+    enabled: status?.isConnected === true && !!environmentId,
   });
 }
 
@@ -246,6 +246,33 @@ export function useSyncPowerAppsApp(): UseMutationResult<
     onError: (error) => {
       toast.error("Failed to sync app", {
         description: error.message,
+      });
+    },
+  });
+}
+
+/**
+ * Create a blank PowerApps Canvas App
+ */
+export function useCreatePowerAppsApp(): UseMutationResult<
+  {
+    success: boolean;
+    message: string;
+    studioUrl: string;
+    instructions: string[];
+  },
+  Error,
+  { environmentId: string; appName: string },
+  unknown
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ environmentId, appName }) =>
+      powerAppsApi.createBlankApp(environmentId, appName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: connectorKeys.powerAppsApps(),
       });
     },
   });

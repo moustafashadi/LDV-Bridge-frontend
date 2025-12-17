@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient from "./client";
 import type {
   ConnectionStatusResponse,
   PowerAppsConnectResponse,
@@ -16,9 +16,9 @@ import type {
   SyncAppResponse,
   ExportAppResponse,
   PlatformType,
-} from '../types/connectors';
+} from "../types/connectors";
 
-const CONNECTORS_BASE = '/connectors';
+const CONNECTORS_BASE = "/connectors";
 
 // ============================================
 // PowerApps Connector API
@@ -80,9 +80,11 @@ export const powerAppsApi = {
    * List PowerApps environments
    */
   async listEnvironments(): Promise<PowerAppsEnvironment[]> {
-    const response = await apiClient.get<{ success: boolean; count: number; environments: PowerAppsEnvironment[] }>(
-      `${CONNECTORS_BASE}/powerapps/environments`
-    );
+    const response = await apiClient.get<{
+      success: boolean;
+      count: number;
+      environments: PowerAppsEnvironment[];
+    }>(`${CONNECTORS_BASE}/powerapps/environments`);
     return response.data.environments;
   },
 
@@ -90,10 +92,14 @@ export const powerAppsApi = {
    * List PowerApps apps (optionally filtered by environment)
    */
   async listApps(environmentId?: string): Promise<PowerAppsApp[]> {
-    const response = await apiClient.get<{ success: boolean; count: number; environmentId: string; apps: PowerAppsApp[] }>(
-      `${CONNECTORS_BASE}/powerapps/apps`,
-      { params: environmentId ? { environmentId } : undefined }
-    );
+    const response = await apiClient.get<{
+      success: boolean;
+      count: number;
+      environmentId: string;
+      apps: PowerAppsApp[];
+    }>(`${CONNECTORS_BASE}/powerapps/apps`, {
+      params: environmentId ? { environmentId } : undefined,
+    });
     return response.data.apps;
   },
 
@@ -126,6 +132,28 @@ export const powerAppsApi = {
     );
     return response.data;
   },
+
+  /**
+   * Create a blank Canvas App
+   * Returns instructions and studio URL for creating the app
+   */
+  async createBlankApp(
+    environmentId: string,
+    appName: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    studioUrl: string;
+    instructions: string[];
+  }> {
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      studioUrl: string;
+      instructions: string[];
+    }>(`${CONNECTORS_BASE}/powerapps/apps/create`, { environmentId, appName });
+    return response.data;
+  },
 };
 
 // ============================================
@@ -147,7 +175,9 @@ export const mendixApi = {
   /**
    * Connect Mendix account using Personal Access Token
    */
-  async connect(credentials: MendixConnectRequest): Promise<MendixConnectResponse> {
+  async connect(
+    credentials: MendixConnectRequest
+  ): Promise<MendixConnectResponse> {
     const response = await apiClient.post<MendixConnectResponse>(
       `${CONNECTORS_BASE}/mendix/connect`,
       credentials
@@ -189,9 +219,11 @@ export const mendixApi = {
    * List Mendix projects
    */
   async listProjects(): Promise<MendixProject[]> {
-    const response = await apiClient.get<{ success: boolean; count: number; projects: MendixProject[] }>(
-      `${CONNECTORS_BASE}/mendix/projects`
-    );
+    const response = await apiClient.get<{
+      success: boolean;
+      count: number;
+      projects: MendixProject[];
+    }>(`${CONNECTORS_BASE}/mendix/projects`);
     return response.data.projects; // Extract projects array from wrapped response
   },
 
@@ -199,10 +231,13 @@ export const mendixApi = {
    * List Mendix apps (optionally filtered by project)
    */
   async listApps(projectId?: string): Promise<MendixApp[]> {
-    const response = await apiClient.get<{ success: boolean; count: number; apps: MendixApp[] }>(
-      `${CONNECTORS_BASE}/mendix/apps`,
-      { params: projectId ? { projectId } : undefined }
-    );
+    const response = await apiClient.get<{
+      success: boolean;
+      count: number;
+      apps: MendixApp[];
+    }>(`${CONNECTORS_BASE}/mendix/apps`, {
+      params: projectId ? { projectId } : undefined,
+    });
     return response.data.apps; // Extract apps array from wrapped response
   },
 
@@ -210,9 +245,10 @@ export const mendixApi = {
    * Get Mendix app details by ID
    */
   async getApp(appId: string): Promise<MendixAppDetail> {
-    const response = await apiClient.get<{ success: boolean; app: MendixAppDetail }>(
-      `${CONNECTORS_BASE}/mendix/apps/${appId}`
-    );
+    const response = await apiClient.get<{
+      success: boolean;
+      app: MendixAppDetail;
+    }>(`${CONNECTORS_BASE}/mendix/apps/${appId}`);
     return response.data.app; // Extract app from wrapped response
   },
 

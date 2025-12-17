@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Plus, RefreshCw, ExternalLink } from "lucide-react";
 import { useSandboxes } from "@/hooks/use-sandboxes";
 import { usePowerAppsApps } from "@/hooks/use-connectors";
+import { CreatePowerAppsDialog } from "@/components/dialogs/create-powerapps-dialog";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import type { Sandbox } from "@/lib/types/sandboxes";
@@ -26,6 +27,7 @@ export default function EnvironmentDetailPage() {
     fetchMySandboxes,
   } = useSandboxes();
   const [environment, setEnvironment] = useState<Sandbox | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // Get the environment details
   useEffect(() => {
@@ -53,9 +55,34 @@ export default function EnvironmentDetailPage() {
     fetchMySandboxes();
   }, []);
 
+  // Debug logging
+  useEffect(() => {
+    console.log("[Environment Page] Apps data:", apps);
+    console.log("[Environment Page] Apps loading:", appsLoading);
+    console.log(
+      "[Environment Page] Environment ID:",
+      environment?.environmentId
+    );
+  }, [apps, appsLoading, environment?.environmentId]);
+
   const handleRefresh = () => {
     refetchApps();
     toast.success("Apps refreshed");
+  };
+
+  const handleCreateApp = () => {
+    if (environment?.platform === "POWERAPPS") {
+      setCreateDialogOpen(true);
+    } else {
+      // For other platforms, redirect to their external URL
+      if (environment?.environmentUrl) {
+        window.open(
+          environment.environmentUrl,
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }
+    }
   };
 
   const handleSyncApp = async (appId: string) => {
@@ -196,18 +223,13 @@ export default function EnvironmentDetailPage() {
             <h2 className="text-2xl font-bold text-white">
               Apps in Environment
             </h2>
-            {environment.environmentUrl && (
-              <a
-                href={environment.environmentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create New App
-                </Button>
-              </a>
-            )}
+            <Button
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={handleCreateApp}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create New App
+            </Button>
           </div>
 
           {appsLoading ? (
@@ -232,18 +254,13 @@ export default function EnvironmentDetailPage() {
                 <p className="text-slate-400 mb-6">
                   Create your first app in this environment to get started
                 </p>
-                {environment.environmentUrl && (
-                  <a
-                    href={environment.environmentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create App in {environment.platform}
-                    </Button>
-                  </a>
-                )}
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={handleCreateApp}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create App in {environment.platform}
+                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -300,6 +317,16 @@ export default function EnvironmentDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Create App Dialog */}
+        {environment && (
+          <CreatePowerAppsDialog
+            open={createDialogOpen}
+            onOpenChange={setCreateDialogOpen}
+            environmentId={environment.environmentId || ""}
+            environmentName={environment.name}
+          />
+        )}
       </main>
     </>
   );
