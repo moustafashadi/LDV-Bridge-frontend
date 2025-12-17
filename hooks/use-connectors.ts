@@ -1,12 +1,18 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryResult,
+  type UseMutationResult,
+} from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   powerAppsApi,
   mendixApi,
   getConnectorStatus,
   testConnectorConnection,
   disconnectConnector,
-} from '../lib/api/connectors-api';
+} from "../lib/api/connectors-api";
 import type {
   ConnectionStatusResponse,
   PowerAppsConnectResponse,
@@ -24,25 +30,28 @@ import type {
   SyncAppResponse,
   ExportAppResponse,
   PlatformType,
-} from '../lib/types/connectors';
+} from "../lib/types/connectors";
 
 // Query Keys
 export const connectorKeys = {
-  all: ['connectors'] as const,
-  powerApps: () => [...connectorKeys.all, 'powerapps'] as const,
-  powerAppsStatus: () => [...connectorKeys.powerApps(), 'status'] as const,
-  powerAppsEnvironments: () => [...connectorKeys.powerApps(), 'environments'] as const,
-  powerAppsApps: (environmentId?: string) => 
-    [...connectorKeys.powerApps(), 'apps', environmentId ?? 'all'] as const,
-  powerAppsApp: (id: string) => [...connectorKeys.powerApps(), 'app', id] as const,
-  
-  mendix: () => [...connectorKeys.all, 'mendix'] as const,
-  mendixStatus: () => [...connectorKeys.mendix(), 'status'] as const,
-  mendixInstructions: () => [...connectorKeys.mendix(), 'instructions'] as const,
-  mendixProjects: () => [...connectorKeys.mendix(), 'projects'] as const,
-  mendixApps: (projectId?: string) => 
-    [...connectorKeys.mendix(), 'apps', projectId ?? 'all'] as const,
-  mendixApp: (id: string) => [...connectorKeys.mendix(), 'app', id] as const,
+  all: ["connectors"] as const,
+  powerApps: () => [...connectorKeys.all, "powerapps"] as const,
+  powerAppsStatus: () => [...connectorKeys.powerApps(), "status"] as const,
+  powerAppsEnvironments: () =>
+    [...connectorKeys.powerApps(), "environments"] as const,
+  powerAppsApps: (environmentId?: string) =>
+    [...connectorKeys.powerApps(), "apps", environmentId ?? "all"] as const,
+  powerAppsApp: (id: string) =>
+    [...connectorKeys.powerApps(), "app", id] as const,
+
+  mendix: () => [...connectorKeys.all, "mendix"] as const,
+  mendixStatus: () => [...connectorKeys.mendix(), "status"] as const,
+  mendixInstructions: () =>
+    [...connectorKeys.mendix(), "instructions"] as const,
+  mendixProjects: () => [...connectorKeys.mendix(), "projects"] as const,
+  mendixApps: (projectId?: string) =>
+    [...connectorKeys.mendix(), "apps", projectId ?? "all"] as const,
+  mendixApp: (id: string) => [...connectorKeys.mendix(), "app", id] as const,
 };
 
 // ============================================
@@ -52,7 +61,10 @@ export const connectorKeys = {
 /**
  * Get PowerApps connection status
  */
-export function usePowerAppsStatus(): UseQueryResult<ConnectionStatusResponse, Error> {
+export function usePowerAppsStatus(): UseQueryResult<
+  ConnectionStatusResponse,
+  Error
+> {
   return useQuery({
     queryKey: connectorKeys.powerAppsStatus(),
     queryFn: () => powerAppsApi.getStatus(),
@@ -63,7 +75,12 @@ export function usePowerAppsStatus(): UseQueryResult<ConnectionStatusResponse, E
 /**
  * Initiate PowerApps OAuth connection
  */
-export function useConnectPowerApps(): UseMutationResult<PowerAppsConnectResponse, Error, void, unknown> {
+export function useConnectPowerApps(): UseMutationResult<
+  PowerAppsConnectResponse,
+  Error,
+  void,
+  unknown
+> {
   return useMutation({
     mutationFn: () => powerAppsApi.connect(),
     onSuccess: (data) => {
@@ -71,7 +88,7 @@ export function useConnectPowerApps(): UseMutationResult<PowerAppsConnectRespons
       window.location.href = data.authorizationUrl;
     },
     onError: (error) => {
-      toast.error('Failed to connect PowerApps', {
+      toast.error("Failed to connect PowerApps", {
         description: error.message,
       });
     },
@@ -81,18 +98,25 @@ export function useConnectPowerApps(): UseMutationResult<PowerAppsConnectRespons
 /**
  * Handle PowerApps OAuth callback
  */
-export function usePowerAppsCallback(): UseMutationResult<void, Error, { code: string; state: string }, unknown> {
+export function usePowerAppsCallback(): UseMutationResult<
+  void,
+  Error,
+  { code: string; state: string },
+  unknown
+> {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ code, state }) => powerAppsApi.handleCallback(code, state),
     onSuccess: () => {
       // Invalidate status to refetch
-      queryClient.invalidateQueries({ queryKey: connectorKeys.powerAppsStatus() });
-      toast.success('PowerApps connected successfully');
+      queryClient.invalidateQueries({
+        queryKey: connectorKeys.powerAppsStatus(),
+      });
+      toast.success("PowerApps connected successfully");
     },
     onError: (error) => {
-      toast.error('Failed to complete PowerApps connection', {
+      toast.error("Failed to complete PowerApps connection", {
         description: error.message,
       });
     },
@@ -102,16 +126,21 @@ export function usePowerAppsCallback(): UseMutationResult<void, Error, { code: s
 /**
  * Test PowerApps connection
  */
-export function useTestPowerApps(): UseMutationResult<TestConnectionResponse, Error, void, unknown> {
+export function useTestPowerApps(): UseMutationResult<
+  TestConnectionResponse,
+  Error,
+  void,
+  unknown
+> {
   return useMutation({
     mutationFn: () => powerAppsApi.test(),
     onSuccess: (data) => {
-      toast.success('PowerApps connection test successful', {
+      toast.success("PowerApps connection test successful", {
         description: data.message,
       });
     },
     onError: (error) => {
-      toast.error('PowerApps connection test failed', {
+      toast.error("PowerApps connection test failed", {
         description: error.message,
       });
     },
@@ -121,17 +150,22 @@ export function useTestPowerApps(): UseMutationResult<TestConnectionResponse, Er
 /**
  * Disconnect PowerApps
  */
-export function useDisconnectPowerApps(): UseMutationResult<DisconnectResponse, Error, void, unknown> {
+export function useDisconnectPowerApps(): UseMutationResult<
+  DisconnectResponse,
+  Error,
+  void,
+  unknown
+> {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: () => powerAppsApi.disconnect(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: connectorKeys.powerApps() });
-      toast.success('PowerApps disconnected');
+      toast.success("PowerApps disconnected");
     },
     onError: (error) => {
-      toast.error('Failed to disconnect PowerApps', {
+      toast.error("Failed to disconnect PowerApps", {
         description: error.message,
       });
     },
@@ -141,9 +175,18 @@ export function useDisconnectPowerApps(): UseMutationResult<DisconnectResponse, 
 /**
  * List PowerApps environments
  */
-export function usePowerAppsEnvironments(): UseQueryResult<PowerAppsEnvironment[], Error> {
+export function usePowerAppsEnvironments(): UseQueryResult<
+  PowerAppsEnvironment[],
+  Error
+> {
   const { data: status } = usePowerAppsStatus();
-  
+
+  console.log("[usePowerAppsEnvironments] Status:", status);
+  console.log(
+    "[usePowerAppsEnvironments] Enabled:",
+    status?.isConnected === true
+  );
+
   return useQuery({
     queryKey: connectorKeys.powerAppsEnvironments(),
     queryFn: () => powerAppsApi.listEnvironments(),
@@ -154,9 +197,11 @@ export function usePowerAppsEnvironments(): UseQueryResult<PowerAppsEnvironment[
 /**
  * List PowerApps apps
  */
-export function usePowerAppsApps(environmentId?: string): UseQueryResult<PowerAppsApp[], Error> {
+export function usePowerAppsApps(
+  environmentId?: string
+): UseQueryResult<PowerAppsApp[], Error> {
   const { data: status } = usePowerAppsStatus();
-  
+
   return useQuery({
     queryKey: connectorKeys.powerAppsApps(environmentId),
     queryFn: () => powerAppsApi.listApps(environmentId),
@@ -167,7 +212,9 @@ export function usePowerAppsApps(environmentId?: string): UseQueryResult<PowerAp
 /**
  * Get PowerApps app details
  */
-export function usePowerAppsApp(appId: string): UseQueryResult<PowerAppsAppDetail, Error> {
+export function usePowerAppsApp(
+  appId: string
+): UseQueryResult<PowerAppsAppDetail, Error> {
   return useQuery({
     queryKey: connectorKeys.powerAppsApp(appId),
     queryFn: () => powerAppsApi.getApp(appId),
@@ -178,19 +225,26 @@ export function usePowerAppsApp(appId: string): UseQueryResult<PowerAppsAppDetai
 /**
  * Sync PowerApps app
  */
-export function useSyncPowerAppsApp(): UseMutationResult<SyncAppResponse, Error, string, unknown> {
+export function useSyncPowerAppsApp(): UseMutationResult<
+  SyncAppResponse,
+  Error,
+  string,
+  unknown
+> {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (appId: string) => powerAppsApi.syncApp(appId),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: connectorKeys.powerAppsApps() });
-      toast.success('App synced successfully', {
+      queryClient.invalidateQueries({
+        queryKey: connectorKeys.powerAppsApps(),
+      });
+      toast.success("App synced successfully", {
         description: data.message,
       });
     },
     onError: (error) => {
-      toast.error('Failed to sync app', {
+      toast.error("Failed to sync app", {
         description: error.message,
       });
     },
@@ -204,7 +258,10 @@ export function useSyncPowerAppsApp(): UseMutationResult<SyncAppResponse, Error,
 /**
  * Get Mendix connection status
  */
-export function useMendixStatus(): UseQueryResult<ConnectionStatusResponse, Error> {
+export function useMendixStatus(): UseQueryResult<
+  ConnectionStatusResponse,
+  Error
+> {
   return useQuery({
     queryKey: connectorKeys.mendixStatus(),
     queryFn: () => mendixApi.getStatus(),
@@ -215,7 +272,10 @@ export function useMendixStatus(): UseQueryResult<ConnectionStatusResponse, Erro
 /**
  * Get Mendix setup instructions
  */
-export function useMendixInstructions(): UseQueryResult<MendixSetupInstructions, Error> {
+export function useMendixInstructions(): UseQueryResult<
+  MendixSetupInstructions,
+  Error
+> {
   return useQuery({
     queryKey: connectorKeys.mendixInstructions(),
     queryFn: () => mendixApi.getSetupInstructions(),
@@ -225,17 +285,22 @@ export function useMendixInstructions(): UseQueryResult<MendixSetupInstructions,
 /**
  * Connect Mendix account
  */
-export function useConnectMendix(): UseMutationResult<MendixConnectResponse, Error, MendixConnectRequest, unknown> {
+export function useConnectMendix(): UseMutationResult<
+  MendixConnectResponse,
+  Error,
+  MendixConnectRequest,
+  unknown
+> {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (credentials) => mendixApi.connect(credentials),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: connectorKeys.mendixStatus() });
-      toast.success('Mendix connected successfully');
+      toast.success("Mendix connected successfully");
     },
     onError: (error) => {
-      toast.error('Failed to connect Mendix', {
+      toast.error("Failed to connect Mendix", {
         description: error.message,
       });
     },
@@ -245,16 +310,21 @@ export function useConnectMendix(): UseMutationResult<MendixConnectResponse, Err
 /**
  * Test Mendix connection
  */
-export function useTestMendix(): UseMutationResult<TestConnectionResponse, Error, void, unknown> {
+export function useTestMendix(): UseMutationResult<
+  TestConnectionResponse,
+  Error,
+  void,
+  unknown
+> {
   return useMutation({
     mutationFn: () => mendixApi.test(),
     onSuccess: (data) => {
-      toast.success('Mendix connection test successful', {
+      toast.success("Mendix connection test successful", {
         description: data.message,
       });
     },
     onError: (error) => {
-      toast.error('Mendix connection test failed', {
+      toast.error("Mendix connection test failed", {
         description: error.message,
       });
     },
@@ -264,17 +334,27 @@ export function useTestMendix(): UseMutationResult<TestConnectionResponse, Error
 /**
  * Disconnect Mendix
  */
-export function useDisconnectMendix(): UseMutationResult<DisconnectResponse, Error, void, unknown> {
+export function useDisconnectMendix(): UseMutationResult<
+  DisconnectResponse,
+  Error,
+  void,
+  unknown
+> {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: () => mendixApi.disconnect(),
     onSuccess: () => {
+      // Invalidate all Mendix-related queries
       queryClient.invalidateQueries({ queryKey: connectorKeys.mendix() });
-      toast.success('Mendix disconnected');
+      queryClient.invalidateQueries({ queryKey: connectorKeys.mendixStatus() });
+      queryClient.invalidateQueries({
+        queryKey: connectorKeys.mendixProjects(),
+      });
+      toast.success("Mendix disconnected");
     },
     onError: (error) => {
-      toast.error('Failed to disconnect Mendix', {
+      toast.error("Failed to disconnect Mendix", {
         description: error.message,
       });
     },
@@ -286,7 +366,7 @@ export function useDisconnectMendix(): UseMutationResult<DisconnectResponse, Err
  */
 export function useMendixProjects(): UseQueryResult<MendixProject[], Error> {
   const { data: status } = useMendixStatus();
-  
+
   return useQuery({
     queryKey: connectorKeys.mendixProjects(),
     queryFn: () => mendixApi.listProjects(),
@@ -297,9 +377,11 @@ export function useMendixProjects(): UseQueryResult<MendixProject[], Error> {
 /**
  * List Mendix apps
  */
-export function useMendixApps(projectId?: string): UseQueryResult<MendixApp[], Error> {
+export function useMendixApps(
+  projectId?: string
+): UseQueryResult<MendixApp[], Error> {
   const { data: status } = useMendixStatus();
-  
+
   return useQuery({
     queryKey: connectorKeys.mendixApps(projectId),
     queryFn: () => mendixApi.listApps(projectId),
@@ -310,7 +392,9 @@ export function useMendixApps(projectId?: string): UseQueryResult<MendixApp[], E
 /**
  * Get Mendix app details
  */
-export function useMendixApp(appId: string): UseQueryResult<MendixAppDetail, Error> {
+export function useMendixApp(
+  appId: string
+): UseQueryResult<MendixAppDetail, Error> {
   return useQuery({
     queryKey: connectorKeys.mendixApp(appId),
     queryFn: () => mendixApi.getApp(appId),
@@ -321,19 +405,24 @@ export function useMendixApp(appId: string): UseQueryResult<MendixAppDetail, Err
 /**
  * Sync Mendix app
  */
-export function useSyncMendixApp(): UseMutationResult<SyncAppResponse, Error, string, unknown> {
+export function useSyncMendixApp(): UseMutationResult<
+  SyncAppResponse,
+  Error,
+  string,
+  unknown
+> {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (appId: string) => mendixApi.syncApp(appId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: connectorKeys.mendixApps() });
-      toast.success('App synced successfully', {
+      toast.success("App synced successfully", {
         description: data.message,
       });
     },
     onError: (error) => {
-      toast.error('Failed to sync app', {
+      toast.error("Failed to sync app", {
         description: error.message,
       });
     },
@@ -347,9 +436,11 @@ export function useSyncMendixApp(): UseMutationResult<SyncAppResponse, Error, st
 /**
  * Get connection status for any platform
  */
-export function useConnectorStatus(platform: PlatformType): UseQueryResult<ConnectionStatusResponse, Error> {
+export function useConnectorStatus(
+  platform: PlatformType
+): UseQueryResult<ConnectionStatusResponse, Error> {
   return useQuery({
-    queryKey: [...connectorKeys.all, platform.toLowerCase(), 'status'],
+    queryKey: [...connectorKeys.all, platform.toLowerCase(), "status"],
     queryFn: () => getConnectorStatus(platform),
     refetchInterval: 30000,
   });
@@ -358,7 +449,9 @@ export function useConnectorStatus(platform: PlatformType): UseQueryResult<Conne
 /**
  * Test connection for any platform
  */
-export function useTestConnector(platform: PlatformType): UseMutationResult<TestConnectionResponse, Error, void, unknown> {
+export function useTestConnector(
+  platform: PlatformType
+): UseMutationResult<TestConnectionResponse, Error, void, unknown> {
   return useMutation({
     mutationFn: () => testConnectorConnection(platform),
     onSuccess: (data) => {
@@ -377,14 +470,16 @@ export function useTestConnector(platform: PlatformType): UseMutationResult<Test
 /**
  * Disconnect from any platform
  */
-export function useDisconnectConnector(platform: PlatformType): UseMutationResult<DisconnectResponse, Error, void, unknown> {
+export function useDisconnectConnector(
+  platform: PlatformType
+): UseMutationResult<DisconnectResponse, Error, void, unknown> {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: () => disconnectConnector(platform),
     onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: [...connectorKeys.all, platform.toLowerCase()] 
+      queryClient.invalidateQueries({
+        queryKey: [...connectorKeys.all, platform.toLowerCase()],
       });
       toast.success(`${platform} disconnected`);
     },

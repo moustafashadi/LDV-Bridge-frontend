@@ -1,9 +1,13 @@
 // Platform Connectors Types
 // These types define the structure for PowerApps and Mendix connectors
 
-export type PlatformType = 'POWERAPPS' | 'MENDIX' | 'OUTSYSTEMS';
+export type PlatformType = "POWERAPPS" | "MENDIX" | "OUTSYSTEMS";
 
-export type ConnectionStatus = 'CONNECTED' | 'DISCONNECTED' | 'ERROR' | 'EXPIRED';
+export type ConnectionStatus =
+  | "CONNECTED"
+  | "DISCONNECTED"
+  | "ERROR"
+  | "EXPIRED";
 
 export interface ConnectionStatusResponse {
   isConnected: boolean;
@@ -73,6 +77,7 @@ export interface MendixSetupInstructions {
 
 export interface MendixConnectRequest {
   apiKey: string;
+  pat: string;
   username: string;
 }
 

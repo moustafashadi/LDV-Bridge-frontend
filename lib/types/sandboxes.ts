@@ -4,29 +4,29 @@
  */
 
 export enum SandboxPlatform {
-  POWERAPPS = 'POWERAPPS',
-  MENDIX = 'MENDIX',
+  POWERAPPS = "POWERAPPS",
+  MENDIX = "MENDIX",
 }
 
 export enum SandboxStatus {
-  PROVISIONING = 'PROVISIONING',
-  ACTIVE = 'ACTIVE',
-  STOPPED = 'STOPPED',
-  EXPIRED = 'EXPIRED',
-  ERROR = 'ERROR',
+  PROVISIONING = "PROVISIONING",
+  ACTIVE = "ACTIVE",
+  STOPPED = "STOPPED",
+  EXPIRED = "EXPIRED",
+  ERROR = "ERROR",
 }
 
 export enum SandboxType {
-  PERSONAL = 'PERSONAL',
-  TEAM = 'TEAM',
-  TRIAL = 'TRIAL',
+  PERSONAL = "PERSONAL",
+  TEAM = "TEAM",
+  TRIAL = "TRIAL",
 }
 
 export enum ProvisioningStatus {
-  PENDING = 'PENDING',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
+  PENDING = "PENDING",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  FAILED = "FAILED",
 }
 
 /**
@@ -46,6 +46,11 @@ export interface Sandbox {
   environmentUrl?: string;
   region?: string;
   appId?: string; // Linked application ID
+  metadata?: {
+    linkedExisting?: boolean; // True if this is a linked environment (not created by us)
+    originalEnvironmentName?: string;
+    [key: string]: any;
+  };
   expiresAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -62,6 +67,18 @@ export interface CreateSandboxRequest {
   expiresAt?: string;
   region?: string;
   sourceAppId?: string; // For cloning existing apps
+}
+
+/**
+ * Link existing environment request
+ */
+export interface LinkExistingEnvironmentRequest {
+  name: string;
+  description?: string;
+  platform: SandboxPlatform;
+  environmentId: string; // The external environment ID from PowerApps/Mendix
+  type: SandboxType;
+  expiresAt?: string;
 }
 
 /**

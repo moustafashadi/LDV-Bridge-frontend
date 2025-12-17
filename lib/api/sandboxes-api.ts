@@ -3,6 +3,7 @@ import type {
   Sandbox,
   CreateSandboxRequest,
   UpdateSandboxRequest,
+  LinkExistingEnvironmentRequest,
   SandboxStats,
   ExtendExpirationRequest,
   ListSandboxesResponse,
@@ -24,6 +25,16 @@ export const sandboxesApi = {
    */
   async create(data: CreateSandboxRequest): Promise<Sandbox> {
     const response = await apiClient.post<Sandbox>(SANDBOXES_BASE, data);
+    return response.data;
+  },
+
+  /**
+   * Link an existing PowerApps/Mendix environment to LDV-Bridge
+   * @param data Environment linking data
+   * @returns Created sandbox record linked to existing environment
+   */
+  async linkExisting(data: LinkExistingEnvironmentRequest): Promise<Sandbox> {
+    const response = await apiClient.post<Sandbox>(`${SANDBOXES_BASE}/link-existing`, data);
     return response.data;
   },
 

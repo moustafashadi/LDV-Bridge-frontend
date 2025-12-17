@@ -80,21 +80,21 @@ export const powerAppsApi = {
    * List PowerApps environments
    */
   async listEnvironments(): Promise<PowerAppsEnvironment[]> {
-    const response = await apiClient.get<PowerAppsEnvironment[]>(
+    const response = await apiClient.get<{ success: boolean; count: number; environments: PowerAppsEnvironment[] }>(
       `${CONNECTORS_BASE}/powerapps/environments`
     );
-    return response.data;
+    return response.data.environments;
   },
 
   /**
    * List PowerApps apps (optionally filtered by environment)
    */
   async listApps(environmentId?: string): Promise<PowerAppsApp[]> {
-    const response = await apiClient.get<PowerAppsApp[]>(
+    const response = await apiClient.get<{ success: boolean; count: number; environmentId: string; apps: PowerAppsApp[] }>(
       `${CONNECTORS_BASE}/powerapps/apps`,
       { params: environmentId ? { environmentId } : undefined }
     );
-    return response.data;
+    return response.data.apps;
   },
 
   /**

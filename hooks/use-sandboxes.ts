@@ -3,6 +3,7 @@ import { sandboxesApi } from '@/lib/api/sandboxes-api';
 import type {
   Sandbox,
   CreateSandboxRequest,
+  LinkExistingEnvironmentRequest,
   UpdateSandboxRequest,
   SandboxFilters,
   SandboxStats,
@@ -20,6 +21,7 @@ export interface UseSandboxesResult {
   fetchMySandboxes: () => Promise<void>;
   fetchSandbox: (id: string) => Promise<Sandbox | null>;
   createSandbox: (data: CreateSandboxRequest) => Promise<Sandbox | null>;
+  linkExistingEnvironment: (data: LinkExistingEnvironmentRequest) => Promise<Sandbox | null>;
   updateSandbox: (id: string, data: UpdateSandboxRequest) => Promise<Sandbox | null>;
   deleteSandbox: (id: string) => Promise<boolean>;
   
@@ -122,6 +124,31 @@ export function useSandboxes(): UseSandboxesResult {
       const message = err instanceof Error ? err.message : 'Failed to create sandbox';
       setError(message);
       console.error('Error creating sandbox:', err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Link existing PowerApps/Mendix environment to LDV-Bridge
+   */
+  const linkExistingEnvironment = useCallback(async (data: LinkExistingEnvironmentRequest): Promise<Sandbox | null> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const sandbox = await sandboxesApi.linkExisting(data);
+      
+      // Update local state
+      setSandboxes(prev => [sandbox, ...prev]);
+      setTotal(prev => prev + 1);
+      
+      return sandbox;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to link existing environment';
+      setError(message);
+      console.error('Error linking environment:', err);
       return null;
     } finally {
       setLoading(false);
@@ -299,6 +326,7 @@ export function useSandboxes(): UseSandboxesResult {
     fetchMySandboxes,
     fetchSandbox,
     createSandbox,
+    linkExistingEnvironment,
     updateSandbox,
     deleteSandbox,
     startSandbox,

@@ -1,22 +1,35 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, ExternalLink, Info } from 'lucide-react';
-import { useConnectMendix, useMendixInstructions } from '@/hooks/use-connectors';
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, ExternalLink, Info } from "lucide-react";
+import {
+  useConnectMendix,
+  useMendixInstructions,
+} from "@/hooks/use-connectors";
 
 interface MendixConnectModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function MendixConnectModal({ open, onOpenChange }: MendixConnectModalProps) {
-  const [apiKey, setApiKey] = useState('');
-  const [username, setUsername] = useState('');
+export function MendixConnectModal({
+  open,
+  onOpenChange,
+}: MendixConnectModalProps) {
+  const [apiKey, setApiKey] = useState("");
+  const [pat, setPat] = useState("");
+  const [username, setUsername] = useState("");
   const [showInstructions, setShowInstructions] = useState(false);
 
   const { mutate: connect, isPending } = useConnectMendix();
@@ -25,17 +38,22 @@ export function MendixConnectModal({ open, onOpenChange }: MendixConnectModalPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!apiKey.trim() || !username.trim()) {
+    if (!apiKey.trim() || !pat.trim() || !username.trim()) {
       return;
     }
 
     connect(
-      { apiKey: apiKey.trim(), username: username.trim() },
+      {
+        apiKey: apiKey.trim(),
+        pat: pat.trim(),
+        username: username.trim(),
+      },
       {
         onSuccess: () => {
           // Reset form and close modal
-          setApiKey('');
-          setUsername('');
+          setApiKey("");
+          setPat("");
+          setUsername("");
           setShowInstructions(false);
           onOpenChange(false);
         },
@@ -44,8 +62,9 @@ export function MendixConnectModal({ open, onOpenChange }: MendixConnectModalPro
   };
 
   const handleCancel = () => {
-    setApiKey('');
-    setUsername('');
+    setApiKey("");
+    setPat("");
+    setUsername("");
     setShowInstructions(false);
     onOpenChange(false);
   };
@@ -56,7 +75,8 @@ export function MendixConnectModal({ open, onOpenChange }: MendixConnectModalPro
         <DialogHeader>
           <DialogTitle>Connect Mendix Account</DialogTitle>
           <DialogDescription>
-            Enter your Mendix Personal Access Token (PAT) to connect your account.
+            Enter your Mendix credentials to connect your account. You'll need
+            both an API Key and a Personal Access Token (PAT).
           </DialogDescription>
         </DialogHeader>
 
@@ -71,7 +91,7 @@ export function MendixConnectModal({ open, onOpenChange }: MendixConnectModalPro
               className="text-blue-600 hover:text-blue-700"
             >
               <Info className="mr-2 h-4 w-4" />
-              {showInstructions ? 'Hide' : 'Show'} setup instructions
+              {showInstructions ? "Hide" : "Show"} setup instructions
             </Button>
             <a
               href="https://docs.mendix.com/apidocs-mxsdk/apidocs/authentication/"
@@ -88,14 +108,16 @@ export function MendixConnectModal({ open, onOpenChange }: MendixConnectModalPro
           {showInstructions && instructions && (
             <Alert>
               <AlertDescription className="space-y-2">
-                <p className="font-semibold">How to generate a Personal Access Token:</p>
+                <p className="font-semibold">
+                  How to generate a Personal Access Token:
+                </p>
                 <ol className="list-decimal list-inside space-y-1 text-sm">
                   {instructions.steps.map((step, index) => (
                     <li key={index}>{step}</li>
                   ))}
                 </ol>
                 <p className="text-sm mt-2">
-                  <strong>Token URL:</strong>{' '}
+                  <strong>Token URL:</strong>{" "}
                   <a
                     href={instructions.tokenUrl}
                     target="_blank"
@@ -107,7 +129,8 @@ export function MendixConnectModal({ open, onOpenChange }: MendixConnectModalPro
                 </p>
                 {instructions.scopes && instructions.scopes.length > 0 && (
                   <p className="text-sm">
-                    <strong>Required scopes:</strong> {instructions.scopes.join(', ')}
+                    <strong>Required scopes:</strong>{" "}
+                    {instructions.scopes.join(", ")}
                   </p>
                 )}
               </AlertDescription>
@@ -137,12 +160,12 @@ export function MendixConnectModal({ open, onOpenChange }: MendixConnectModalPro
           {/* API Key Field */}
           <div className="space-y-2">
             <Label htmlFor="apiKey">
-              Personal Access Token (PAT) <span className="text-red-500">*</span>
+              Mendix API Key <span className="text-red-500">*</span>
             </Label>
             <Input
               id="apiKey"
               type="password"
-              placeholder="mxpat-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              placeholder="150fd9d2-66e6-49fc-95e7-627af619979d"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               required
@@ -150,32 +173,66 @@ export function MendixConnectModal({ open, onOpenChange }: MendixConnectModalPro
               autoComplete="off"
             />
             <p className="text-xs text-muted-foreground">
-              Your token will be securely encrypted and stored
+              Used to validate your connection and for general API access
+              (listing projects, environments)
+            </p>
+          </div>
+
+          {/* PAT Field */}
+          <div className="space-y-2">
+            <Label htmlFor="pat">
+              Personal Access Token (PAT){" "}
+              <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="pat"
+              type="password"
+              placeholder="7LJE...vk"
+              value={pat}
+              onChange={(e) => setPat(e.target.value)}
+              required
+              disabled={isPending}
+              autoComplete="off"
+            />
+            <p className="text-xs text-muted-foreground">
+              Stored securely for creating and managing apps. Not validated
+              during connection.
             </p>
           </div>
 
           {/* Security Notice */}
           <Alert>
             <AlertDescription className="text-xs">
-              <strong>Security:</strong> Your credentials are encrypted using AES-256 encryption before
-              being stored. They are never shared with third parties and are only used to authenticate
-              with Mendix APIs on your behalf.
+              <strong>Security:</strong> Your credentials are encrypted using
+              AES-256 encryption before being stored. They are never shared with
+              third parties and are only used to authenticate with Mendix APIs
+              on your behalf.
             </AlertDescription>
           </Alert>
 
           {/* Actions */}
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={handleCancel} disabled={isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isPending}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending || !apiKey.trim() || !username.trim()}>
+            <Button
+              type="submit"
+              disabled={
+                isPending || !apiKey.trim() || !pat.trim() || !username.trim()
+              }
+            >
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Connecting...
                 </>
               ) : (
-                'Connect'
+                "Connect"
               )}
             </Button>
           </div>

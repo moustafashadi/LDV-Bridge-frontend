@@ -22,9 +22,10 @@ import {
 } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, AlertCircle, Info } from "lucide-react"
+import { Loader2, AlertCircle, Info, Link as LinkIcon } from "lucide-react"
 import { useSandboxes } from "@/hooks/use-sandboxes"
 import { useMyApps } from "@/lib/hooks/use-app-access"
+import { usePowerAppsEnvironments } from "@/hooks/use-connectors"
 import { SandboxPlatform, SandboxType } from "@/lib/types/sandboxes"
 import { toast } from "sonner"
 
@@ -35,10 +36,11 @@ interface CreateSandboxModalProps {
 }
 
 export function CreateSandboxModal({ open, onOpenChange, onSuccess }: CreateSandboxModalProps) {
-  const { createSandbox, loading } = useSandboxes()
+  const { createSandbox, linkExistingEnvironment, loading } = useSandboxes()
   const { data: myApps, isLoading: appsLoading } = useMyApps()
+  const { data: powerAppsEnvironments, isLoading: environmentsLoading } = usePowerAppsEnvironments()
   
-  const [activeTab, setActiveTab] = useState("new")
+  const [activeTab, setActiveTab] = useState("link")
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -46,6 +48,7 @@ export function CreateSandboxModal({ open, onOpenChange, onSuccess }: CreateSand
     type: SandboxType.PERSONAL,
     region: "",
     sourceAppId: "", // For cloning
+    environmentId: "", // For linking existing
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [cloneInfo, setCloneInfo] = useState<{ count: number; appName: string } | null>(null)
@@ -82,6 +85,11 @@ export function CreateSandboxModal({ open, onOpenChange, onSuccess }: CreateSand
       newErrors.name = "Sandbox name is required"
     }
 
+    // For link tab, name is required
+    if (activeTab === "link" && !formData.name.trim()) {
+      newErrors.name = "Sandbox name is required"
+    }
+
     if (!formData.platform) {
       newErrors.platform = "Please select a platform"
     }
@@ -89,6 +97,11 @@ export function CreateSandboxModal({ open, onOpenChange, onSuccess }: CreateSand
     // Clone tab specific validation
     if (activeTab === "clone" && !formData.sourceAppId) {
       newErrors.sourceApp = "Please select an app to clone"
+    }
+
+    // Link tab specific validation
+    if (activeTab === "link" && !formData.environmentId) {
+      newErrors.environment = "Please select an environment to link"
     }
 
     setErrors(newErrors)
@@ -103,26 +116,47 @@ export function CreateSandboxModal({ open, onOpenChange, onSuccess }: CreateSand
     }
 
     try {
-      // For cloning, use the source app name if no custom name provided
-      let sandboxName = formData.name
-      if (activeTab === "clone" && !sandboxName.trim() && cloneInfo) {
-        sandboxName = cloneInfo.appName
+      let sandbox;
+
+      if (activeTab === "link") {
+        // Link existing environment
+        sandbox = await linkExistingEnvironment({
+          name: formData.name,
+          description: formData.description || undefined,
+          platform: formData.platform as SandboxPlatform,
+          environmentId: formData.environmentId,
+          type: formData.type,
+        });
+
+        if (sandbox) {
+          toast.success("Environment linked successfully!", {
+            description: `${formData.name} is now available in LDV-Bridge`,
+          });
+        }
+      } else {
+        // For cloning, use the source app name if no custom name provided
+        let sandboxName = formData.name;
+        if (activeTab === "clone" && !sandboxName.trim() && cloneInfo) {
+          sandboxName = cloneInfo.appName;
+        }
+
+        sandbox = await createSandbox({
+          name: sandboxName,
+          description: formData.description || undefined,
+          platform: formData.platform as SandboxPlatform,
+          type: formData.type,
+          region: formData.region || undefined,
+          sourceAppId: activeTab === "clone" ? formData.sourceAppId : undefined,
+        });
+
+        if (sandbox) {
+          toast.success("Sandbox created successfully!", {
+            description: `${sandboxName} is being provisioned...`,
+          });
+        }
       }
 
-      const sandbox = await createSandbox({
-        name: sandboxName,
-        description: formData.description || undefined,
-        platform: formData.platform as SandboxPlatform,
-        type: formData.type,
-        region: formData.region || undefined,
-        sourceAppId: activeTab === "clone" ? formData.sourceAppId : undefined,
-      })
-
       if (sandbox) {
-        toast.success("Sandbox created successfully!", {
-          description: `${formData.name} is being provisioned...`,
-        })
-        
         // Reset form
         setFormData({
           name: "",
@@ -131,18 +165,19 @@ export function CreateSandboxModal({ open, onOpenChange, onSuccess }: CreateSand
           type: SandboxType.PERSONAL,
           region: "",
           sourceAppId: "",
-        })
-        setErrors({})
-        setActiveTab("new")
+          environmentId: "",
+        });
+        setErrors({});
+        setActiveTab("link");
         
         // Close modal and call success callback
-        onOpenChange(false)
-        onSuccess?.()
+        onOpenChange(false);
+        onSuccess?.();
       }
     } catch (error) {
-      toast.error("Failed to create sandbox", {
+      toast.error(activeTab === "link" ? "Failed to link environment" : "Failed to create sandbox", {
         description: error instanceof Error ? error.message : "An error occurred",
-      })
+      });
     }
   }
 
@@ -163,12 +198,15 @@ export function CreateSandboxModal({ open, onOpenChange, onSuccess }: CreateSand
 
         <form onSubmit={handleSubmit}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-slate-700">
+            <TabsList className="grid w-full grid-cols-3 bg-slate-700">
               <TabsTrigger value="new" className="data-[state=active]:bg-slate-600">
                 Create New
               </TabsTrigger>
+              <TabsTrigger value="link" className="data-[state=active]:bg-slate-600">
+                Link Existing
+              </TabsTrigger>
               <TabsTrigger value="clone" className="data-[state=active]:bg-slate-600">
-                Clone Existing
+                Clone App
               </TabsTrigger>
             </TabsList>
 
@@ -290,6 +328,164 @@ export function CreateSandboxModal({ open, onOpenChange, onSuccess }: CreateSand
                 <p className="text-xs text-slate-400">
                   Leave empty to use default region for the selected platform
                 </p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="link" className="space-y-4 mt-4">
+              {/* Info Alert */}
+              <Alert className="bg-blue-500/10 border-blue-500/50">
+                <LinkIcon className="h-4 w-4 text-blue-400" />
+                <AlertDescription className="text-blue-200 text-sm">
+                  <strong>Link Existing Environment:</strong> Connect your existing PowerApps environment to LDV-Bridge 
+                  for tracking and governance. This is <strong>instant</strong> - no provisioning required!
+                </AlertDescription>
+              </Alert>
+
+              {/* Platform Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="link-platform" className="text-slate-200">
+                  Platform *
+                </Label>
+                <Select
+                  value={formData.platform}
+                  onValueChange={(value) => handlePlatformSelect(value as SandboxPlatform)}
+                >
+                  <SelectTrigger 
+                    className={`bg-slate-700 border-slate-600 text-white ${errors.platform ? 'border-red-500' : ''}`}
+                  >
+                    <SelectValue placeholder="Select a platform" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-700 border-slate-600">
+                    <SelectItem value={SandboxPlatform.POWERAPPS} className="text-white hover:bg-slate-600">
+                      ⚡ Microsoft PowerApps
+                    </SelectItem>
+                    <SelectItem value={SandboxPlatform.MENDIX} className="text-white hover:bg-slate-600">
+                      🔷 Mendix
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.platform && (
+                  <p className="text-sm text-red-500">{errors.platform}</p>
+                )}
+              </div>
+
+              {/* Environment Selection */}
+              {formData.platform === SandboxPlatform.POWERAPPS && (
+                <div className="space-y-2">
+                  <Label htmlFor="environment" className="text-slate-200">
+                    PowerApps Environment *
+                  </Label>
+                  {environmentsLoading ? (
+                    <div className="flex items-center justify-center py-4 bg-slate-700 rounded-md">
+                      <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                      <span className="ml-2 text-slate-400">Loading environments...</span>
+                    </div>
+                  ) : powerAppsEnvironments && powerAppsEnvironments.length > 0 ? (
+                    <>
+                      <Select
+                        value={formData.environmentId}
+                        onValueChange={(value) => {
+                          setFormData(prev => ({ ...prev, environmentId: value }))
+                          setErrors(prev => ({ ...prev, environment: "" }))
+                          // Auto-fill name from environment if not set
+                          const selectedEnv = powerAppsEnvironments.find((env: any) => env.id === value)
+                          if (selectedEnv && !formData.name) {
+                            setFormData(prev => ({ ...prev, name: selectedEnv.properties?.displayName || selectedEnv.name }))
+                          }
+                        }}
+                      >
+                        <SelectTrigger 
+                          className={`bg-slate-700 border-slate-600 text-white ${errors.environment ? 'border-red-500' : ''}`}
+                        >
+                          <SelectValue placeholder="Select an environment" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-700 border-slate-600 max-h-[200px]">
+                          {powerAppsEnvironments.map((env: any) => (
+                            <SelectItem key={env.id} value={env.id} className="text-white hover:bg-slate-600">
+                              {env.properties?.displayName || env.name}
+                              {env.properties?.isDefault && " (Default)"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.environment && (
+                        <p className="text-sm text-red-500">{errors.environment}</p>
+                      )}
+                    </>
+                  ) : (
+                    <Alert className="bg-amber-500/10 border-amber-500/50">
+                      <AlertCircle className="h-4 w-4 text-amber-500" />
+                      <AlertDescription className="text-amber-200 text-sm">
+                        No PowerApps environments found. Make sure you're connected to PowerApps.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
+
+              {/* Name */}
+              <div className="space-y-2">
+                <Label htmlFor="link-name" className="text-slate-200">
+                  Workspace Name *
+                </Label>
+                <Input
+                  id="link-name"
+                  placeholder="e.g., My Production Environment"
+                  value={formData.name}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, name: e.target.value }))
+                    setErrors(prev => ({ ...prev, name: "" }))
+                  }}
+                  className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 ${
+                    errors.name ? 'border-red-500' : ''
+                  }`}
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name}</p>
+                )}
+                <p className="text-xs text-slate-400">
+                  Display name for this workspace in LDV-Bridge
+                </p>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="link-description" className="text-slate-200">
+                  Description
+                </Label>
+                <Textarea
+                  id="link-description"
+                  placeholder="What will you use this workspace for?"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 min-h-20"
+                />
+              </div>
+
+              {/* Type */}
+              <div className="space-y-2">
+                <Label htmlFor="link-type" className="text-slate-200">
+                  Workspace Type
+                </Label>
+                <Select
+                  value={formData.type}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, type: value as SandboxType }))}
+                >
+                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-700 border-slate-600">
+                    <SelectItem value={SandboxType.PERSONAL} className="text-white hover:bg-slate-600">
+                      Personal (30 days)
+                    </SelectItem>
+                    <SelectItem value={SandboxType.TEAM} className="text-white hover:bg-slate-600">
+                      Team (60 days)
+                    </SelectItem>
+                    <SelectItem value={SandboxType.TRIAL} className="text-white hover:bg-slate-600">
+                      Trial (90 days)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </TabsContent>
 
@@ -512,10 +708,10 @@ export function CreateSandboxModal({ open, onOpenChange, onSuccess }: CreateSand
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {activeTab === "clone" ? "Cloning..." : "Creating..."}
+                  {activeTab === "link" ? "Linking..." : activeTab === "clone" ? "Cloning..." : "Creating..."}
                 </>
               ) : (
-                activeTab === "clone" ? "Clone Sandbox" : "Create Sandbox"
+                activeTab === "link" ? "Link Environment" : activeTab === "clone" ? "Clone Sandbox" : "Create Sandbox"
               )}
             </Button>
           </DialogFooter>
