@@ -142,10 +142,10 @@ export function CreateSandboxModal({
           {
             name: formData.name,
             description: formData.description || undefined,
-            platform: formData.platform as "POWERAPPS" | "MENDIX",
+            platform: "POWERAPPS", // Only PowerApps is supported for linked environments
             environmentId: formData.environmentId,
-            environmentUrl:
-              selectedEnv?.properties?.linkedEnvironmentMetadata?.instanceUrl,
+            environmentUrl: (selectedEnv?.properties as any)
+              ?.linkedEnvironmentMetadata?.instanceUrl,
             region: selectedEnv?.location,
           },
           {

@@ -32,4 +32,6 @@ export interface CreateLinkedEnvironmentDto {
   description?: string;
   platform: LinkedEnvironmentPlatform;
   environmentId: string;
+  environmentUrl?: string;
+  region?: string;
 }
