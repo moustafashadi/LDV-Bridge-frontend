@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MainNav } from "@/components/layout/main-nav";
+import { RoleLayout } from "@/components/layout/role-layout";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/layout/status-badge";
 import { Button } from "@/components/ui/button";
@@ -169,28 +169,11 @@ export default function CitizenDeveloperHome() {
     }
   };
 
-  const navItems = [
-    { label: "My Workspace", href: "/citizen-developer" },
-    { label: "My Changes", href: "/citizen-developer/changes" },
-    { label: "Request Review", href: "/citizen-developer/review" },
-    { label: "Connectors", href: "/citizen-developer/connectors" },
-    { label: "Learning Hub", href: "/citizen-developer/learning" },
-  ];
-
   const linkedEnvironments = linkedEnvironmentsData || [];
   const apps = myApps || [];
 
   return (
-    <>
-      <MainNav
-        title="Citizen Developer Portal"
-        navItems={navItems}
-        userRole="Citizen Developer"
-        userName="Sarah K."
-        userInitials="SK"
-        notificationCount={2}
-      />
-
+    <RoleLayout>
       <PageHeader
         title={`Welcome back!`}
         description={`Track your apps, manage sandboxes, and request reviews for your changes`}
@@ -700,6 +683,6 @@ export default function CitizenDeveloperHome() {
         onOpenChange={setIsCreateModalOpen}
         onSuccess={handleSandboxCreated}
       />
-    </>
+    </RoleLayout>
   );
 }

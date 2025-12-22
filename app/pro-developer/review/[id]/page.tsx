@@ -1,50 +1,49 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { MainNav } from "@/components/layout/main-nav"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { ChevronLeft, AlertCircle, CheckCircle2 } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { RoleLayout } from "@/components/layout/role-layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { ChevronLeft, AlertCircle, CheckCircle2 } from "lucide-react";
 
-export default function VisualDiffViewer({ params }: { params: { id: string } }) {
-  const [activeTab, setActiveTab] = useState("visual")
-  const [showAnnotation, setShowAnnotation] = useState(false)
-
-  const navItems = [
-    { label: "Review Queue", href: "/pro-developer" },
-    { label: "Change History", href: "/pro-developer/history" },
-    { label: "CI/CD Pipelines", href: "/pro-developer/pipelines" },
-    { label: "Audit Logs", href: "/pro-developer/audit" },
-  ]
+export default function VisualDiffViewer({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const [activeTab, setActiveTab] = useState("visual");
+  const [showAnnotation, setShowAnnotation] = useState(false);
 
   return (
-    <>
-      <MainNav
-        title="Professional Developer Dashboard"
-        navItems={navItems}
-        userRole="Professional Developer"
-        userName="John M."
-        userInitials="JM"
-      />
-
+    <RoleLayout>
       <div className="border-b border-slate-700 bg-slate-800/50 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/pro-developer">
-              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-400 hover:text-white"
+              >
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Back to Queue
               </Button>
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-white">Review: Customer Portal v3.2</h1>
-              <p className="text-sm text-slate-400">Submitted by Sarah K. | Risk: High</p>
+              <h1 className="text-xl font-bold text-white">
+                Review: Customer Portal v3.2
+              </h1>
+              <p className="text-sm text-slate-400">
+                Submitted by Sarah K. | Risk: High
+              </p>
             </div>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700">Test in Staging</Button>
+          <Button className="bg-blue-600 hover:bg-blue-700">
+            Test in Staging
+          </Button>
         </div>
       </div>
 
@@ -52,18 +51,34 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
               <TabsList className="grid w-full grid-cols-4 bg-slate-800 border border-slate-700">
-                <TabsTrigger value="visual" className="text-slate-300 data-[state=active]:text-white">
+                <TabsTrigger
+                  value="visual"
+                  className="text-slate-300 data-[state=active]:text-white"
+                >
                   Visual Diff
                 </TabsTrigger>
-                <TabsTrigger value="code" className="text-slate-300 data-[state=active]:text-white">
+                <TabsTrigger
+                  value="code"
+                  className="text-slate-300 data-[state=active]:text-white"
+                >
                   Code Diff
                 </TabsTrigger>
-                <TabsTrigger value="security" className="text-slate-300 data-[state=active]:text-white">
+                <TabsTrigger
+                  value="security"
+                  className="text-slate-300 data-[state=active]:text-white"
+                >
                   Security
                 </TabsTrigger>
-                <TabsTrigger value="summary" className="text-slate-300 data-[state=active]:text-white">
+                <TabsTrigger
+                  value="summary"
+                  className="text-slate-300 data-[state=active]:text-white"
+                >
                   Summary
                 </TabsTrigger>
               </TabsList>
@@ -74,23 +89,31 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
                   <CardContent className="p-6">
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
-                        <h3 className="text-sm font-semibold text-slate-300 mb-4">Before (Production)</h3>
+                        <h3 className="text-sm font-semibold text-slate-300 mb-4">
+                          Before (Production)
+                        </h3>
                         <div className="bg-slate-900 rounded-lg p-6 min-h-64 border border-slate-700 flex items-center justify-center">
                           <div className="text-center">
                             <div className="text-4xl mb-2">📱</div>
-                            <p className="text-slate-400 text-sm">Original app state</p>
+                            <p className="text-slate-400 text-sm">
+                              Original app state
+                            </p>
                           </div>
                         </div>
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-slate-300 mb-4">After (Proposed)</h3>
+                        <h3 className="text-sm font-semibold text-slate-300 mb-4">
+                          After (Proposed)
+                        </h3>
                         <div className="bg-slate-900 rounded-lg p-6 min-h-64 border border-green-700/50 flex items-center justify-center relative">
                           <div className="absolute top-4 right-4 bg-green-600 text-white text-xs px-2 py-1 rounded">
                             New Button
                           </div>
                           <div className="text-center">
                             <div className="text-4xl mb-2">📱</div>
-                            <p className="text-slate-400 text-sm">With export button added</p>
+                            <p className="text-slate-400 text-sm">
+                              With export button added
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -99,7 +122,8 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
                     {/* Annotation */}
                     <div className="mt-6 p-4 bg-slate-900 rounded-lg border border-slate-700">
                       <p className="text-sm text-slate-300 mb-3">
-                        <span className="font-semibold">Submit Button:</span> Color changed from #0078D4 to #FF5722
+                        <span className="font-semibold">Submit Button:</span>{" "}
+                        Color changed from #0078D4 to #FF5722
                       </p>
                       <Button
                         variant="outline"
@@ -117,7 +141,10 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
                             className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
                           />
                           <div className="flex gap-2">
-                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                            <Button
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
                               Save Comment
                             </Button>
                             <Button
@@ -145,15 +172,25 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
                         <div>
                           {"{"}
                           <div className="ml-4">
-                            <span className="text-blue-400">"components"</span>: {"{"}
+                            <span className="text-blue-400">"components"</span>:{" "}
+                            {"{"}
                             <div className="ml-4">
-                              <span className="text-blue-400">"submitButton"</span>: {"{"}
+                              <span className="text-blue-400">
+                                "submitButton"
+                              </span>
+                              : {"{"}
                               <div className="ml-4">
-                                <span className="line-through text-red-400">"color": "#0078D4",</span>
+                                <span className="line-through text-red-400">
+                                  "color": "#0078D4",
+                                </span>
                                 <br />
-                                <span className="text-green-400">"color": "#FF5722",</span>
+                                <span className="text-green-400">
+                                  "color": "#FF5722",
+                                </span>
                                 <br />
-                                <span className="text-slate-400">"label": "Submit"</span>
+                                <span className="text-slate-400">
+                                  "label": "Submit"
+                                </span>
                               </div>
                               {"}"}
                             </div>
@@ -162,11 +199,14 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
                               <br />
                               "exportButton": {"{"}
                               <div className="ml-4">
-                                <span className="text-blue-400">"type"</span>: "action",
+                                <span className="text-blue-400">"type"</span>:
+                                "action",
                                 <br />
-                                <span className="text-blue-400">"label"</span>: "Export Data",
+                                <span className="text-blue-400">"label"</span>:
+                                "Export Data",
                                 <br />
-                                <span className="text-blue-400">"icon"</span>: "download"
+                                <span className="text-blue-400">"icon"</span>:
+                                "download"
                               </div>
                               {"}"}
                             </span>
@@ -194,7 +234,9 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
                     <div className="flex items-start gap-3 p-4 bg-green-900/20 border border-green-700/50 rounded-lg">
                       <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-semibold text-green-400">No Critical Issues Found</p>
+                        <p className="font-semibold text-green-400">
+                          No Critical Issues Found
+                        </p>
                       </div>
                     </div>
 
@@ -204,14 +246,26 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
                       </p>
                       <div className="ml-6 space-y-3">
                         <div className="p-3 bg-slate-900 rounded border border-slate-700">
-                          <p className="text-sm text-slate-300">New API endpoint has no rate limiting</p>
-                          <Button size="sm" variant="link" className="text-blue-400 p-0 h-auto mt-2">
+                          <p className="text-sm text-slate-300">
+                            New API endpoint has no rate limiting
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="link"
+                            className="text-blue-400 p-0 h-auto mt-2"
+                          >
                             View Details
                           </Button>
                         </div>
                         <div className="p-3 bg-slate-900 rounded border border-slate-700">
-                          <p className="text-sm text-slate-300">Export button grants download access to all users</p>
-                          <Button size="sm" variant="link" className="text-blue-400 p-0 h-auto mt-2">
+                          <p className="text-sm text-slate-300">
+                            Export button grants download access to all users
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="link"
+                            className="text-blue-400 p-0 h-auto mt-2"
+                          >
                             View Policy Recommendation
                           </Button>
                         </div>
@@ -219,7 +273,9 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
                     </div>
 
                     <div className="space-y-2 pt-4 border-t border-slate-700">
-                      <p className="font-semibold text-green-400">Passed Checks (8)</p>
+                      <p className="font-semibold text-green-400">
+                        Passed Checks (8)
+                      </p>
                       <ul className="text-sm text-slate-400 space-y-1 ml-4">
                         <li>✓ No hardcoded secrets</li>
                         <li>✓ SSL certificate valid</li>
@@ -235,7 +291,9 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
                 <Card className="bg-slate-800 border-slate-700">
                   <CardContent className="p-6 space-y-4">
                     <div>
-                      <p className="text-sm font-semibold text-slate-300 mb-2">Changes Summary</p>
+                      <p className="text-sm font-semibold text-slate-300 mb-2">
+                        Changes Summary
+                      </p>
                       <ul className="text-sm text-slate-400 space-y-1">
                         <li>✏️ Modified Components: 3</li>
                         <li>➕ New Components: 1</li>
@@ -243,12 +301,16 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
                       </ul>
                     </div>
                     <div className="pt-4 border-t border-slate-700">
-                      <p className="text-sm font-semibold text-slate-300 mb-2">Impact Assessment</p>
+                      <p className="text-sm font-semibold text-slate-300 mb-2">
+                        Impact Assessment
+                      </p>
                       <div className="space-y-2 text-sm text-slate-400">
                         <p>Affects: 250 daily active users</p>
                         <p>Data access: Low sensitivity</p>
                         <p>Performance impact: Minimal</p>
-                        <p className="text-green-400">Compliance: GDPR compliant</p>
+                        <p className="text-green-400">
+                          Compliance: GDPR compliant
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -258,10 +320,15 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
 
             {/* Action Buttons */}
             <div className="flex gap-3 mt-6 justify-end">
-              <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white bg-transparent">
+              <Button
+                variant="outline"
+                className="border-slate-600 text-slate-300 hover:text-white bg-transparent"
+              >
                 Request Changes
               </Button>
-              <Button className="bg-green-600 hover:bg-green-700">Approve & Deploy</Button>
+              <Button className="bg-green-600 hover:bg-green-700">
+                Approve & Deploy
+              </Button>
             </div>
           </div>
 
@@ -269,7 +336,9 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
           <div>
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white text-base">Submitter Info</CardTitle>
+                <CardTitle className="text-white text-base">
+                  Submitter Info
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -277,13 +346,18 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
                   <p className="text-xs text-slate-400">Marketing Manager</p>
                 </div>
                 <div className="p-3 bg-slate-900 rounded border border-slate-700">
-                  <p className="text-xs font-semibold text-slate-300 mb-2">Description:</p>
+                  <p className="text-xs font-semibold text-slate-300 mb-2">
+                    Description:
+                  </p>
                   <p className="text-xs text-slate-400">
-                    Added export button so managers can download campaign reports to Excel for monthly reviews.
+                    Added export button so managers can download campaign
+                    reports to Excel for monthly reviews.
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-slate-300 mb-2">Sarah's Stats:</p>
+                  <p className="text-xs font-semibold text-slate-300 mb-2">
+                    Sarah's Stats:
+                  </p>
                   <ul className="text-xs text-slate-400 space-y-1">
                     <li>12 previous submissions</li>
                     <li>10 approved (83% rate)</li>
@@ -295,6 +369,6 @@ export default function VisualDiffViewer({ params }: { params: { id: string } })
           </div>
         </div>
       </main>
-    </>
-  )
+    </RoleLayout>
+  );
 }

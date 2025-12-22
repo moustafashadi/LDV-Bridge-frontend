@@ -1,15 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { MainNav } from "@/components/layout/main-nav"
-import { PageHeader } from "@/components/layout/page-header"
-import { RiskIndicator } from "@/components/layout/risk-indicator"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useState } from "react";
+import Link from "next/link";
+import { RoleLayout } from "@/components/layout/role-layout";
+import { PageHeader } from "@/components/layout/page-header";
+import { RiskIndicator } from "@/components/layout/risk-indicator";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ProDeveloperDashboard() {
   const [reviews] = useState([
@@ -40,32 +53,26 @@ export default function ProDeveloperDashboard() {
       risk: "low",
       submitted: "1d ago",
     },
-  ])
+  ]);
 
   const [activity] = useState([
-    { user: "Alice", action: "Approved", app: "Inventory App", time: "10 min ago" },
-    { user: "Bob", action: "Requested changes", app: "Finance Portal", time: "1h ago" },
+    {
+      user: "Alice",
+      action: "Approved",
+      app: "Inventory App",
+      time: "10 min ago",
+    },
+    {
+      user: "Bob",
+      action: "Requested changes",
+      app: "Finance Portal",
+      time: "1h ago",
+    },
     { user: "You", action: "Reviewed", app: "4 apps", time: "Today" },
-  ])
-
-  const navItems = [
-    { label: "Review Queue", href: "/pro-developer" },
-    { label: "Change History", href: "/pro-developer/history" },
-    { label: "CI/CD Pipelines", href: "/pro-developer/pipelines" },
-    { label: "Audit Logs", href: "/pro-developer/audit" },
-  ]
+  ]);
 
   return (
-    <>
-      <MainNav
-        title="Professional Developer Dashboard"
-        navItems={navItems}
-        userRole="Professional Developer"
-        userName="John M."
-        userInitials="JM"
-        notificationCount={7}
-      />
-
+    <RoleLayout>
       <PageHeader
         title="Review Queue"
         description="7 pending reviews"
@@ -124,18 +131,33 @@ export default function ProDeveloperDashboard() {
                         <TableHead className="w-12">
                           <Checkbox className="border-slate-600" />
                         </TableHead>
-                        <TableHead className="text-slate-300">Priority</TableHead>
-                        <TableHead className="text-slate-300">App Name</TableHead>
-                        <TableHead className="text-slate-300">Submitter</TableHead>
-                        <TableHead className="text-slate-300">Changes</TableHead>
+                        <TableHead className="text-slate-300">
+                          Priority
+                        </TableHead>
+                        <TableHead className="text-slate-300">
+                          App Name
+                        </TableHead>
+                        <TableHead className="text-slate-300">
+                          Submitter
+                        </TableHead>
+                        <TableHead className="text-slate-300">
+                          Changes
+                        </TableHead>
                         <TableHead className="text-slate-300">Risk</TableHead>
-                        <TableHead className="text-slate-300">Submitted</TableHead>
-                        <TableHead className="text-slate-300">Actions</TableHead>
+                        <TableHead className="text-slate-300">
+                          Submitted
+                        </TableHead>
+                        <TableHead className="text-slate-300">
+                          Actions
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {reviews.map((review) => (
-                        <TableRow key={review.id} className="border-b border-slate-700 hover:bg-slate-700/50">
+                        <TableRow
+                          key={review.id}
+                          className="border-b border-slate-700 hover:bg-slate-700/50"
+                        >
                           <TableCell>
                             <Checkbox className="border-slate-600" />
                           </TableCell>
@@ -145,20 +167,32 @@ export default function ProDeveloperDashboard() {
                                 review.priority === "high"
                                   ? "text-red-400"
                                   : review.priority === "medium"
-                                    ? "text-yellow-400"
-                                    : "text-green-400"
+                                  ? "text-yellow-400"
+                                  : "text-green-400"
                               }`}
                             >
-                              {review.priority === "high" ? "🔴" : review.priority === "medium" ? "🟡" : "🟢"}
+                              {review.priority === "high"
+                                ? "🔴"
+                                : review.priority === "medium"
+                                ? "🟡"
+                                : "🟢"}
                             </span>
                           </TableCell>
-                          <TableCell className="text-white font-medium">{review.app}</TableCell>
-                          <TableCell className="text-slate-300">{review.submitter}</TableCell>
-                          <TableCell className="text-slate-300">{review.changes} components</TableCell>
+                          <TableCell className="text-white font-medium">
+                            {review.app}
+                          </TableCell>
+                          <TableCell className="text-slate-300">
+                            {review.submitter}
+                          </TableCell>
+                          <TableCell className="text-slate-300">
+                            {review.changes} components
+                          </TableCell>
                           <TableCell>
                             <RiskIndicator level={review.risk as any} />
                           </TableCell>
-                          <TableCell className="text-slate-400 text-sm">{review.submitted}</TableCell>
+                          <TableCell className="text-slate-400 text-sm">
+                            {review.submitted}
+                          </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
                               {review.risk === "low" && (
@@ -171,7 +205,10 @@ export default function ProDeveloperDashboard() {
                                 </Button>
                               )}
                               <Link href={`/pro-developer/review/${review.id}`}>
-                                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                                <Button
+                                  size="sm"
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
                                   Review Now
                                 </Button>
                               </Link>
@@ -191,13 +228,19 @@ export default function ProDeveloperDashboard() {
             {/* Team Activity */}
             <Card className="bg-slate-800 border-slate-700 mb-6">
               <CardHeader>
-                <CardTitle className="text-white text-base">Team Activity</CardTitle>
+                <CardTitle className="text-white text-base">
+                  Team Activity
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {activity.map((item, idx) => (
-                  <div key={idx} className="pb-4 border-b border-slate-700 last:border-0 last:pb-0">
+                  <div
+                    key={idx}
+                    className="pb-4 border-b border-slate-700 last:border-0 last:pb-0"
+                  >
                     <p className="text-sm text-slate-300">
-                      <span className="font-semibold">[{item.user}]</span> {item.action} "{item.app}"
+                      <span className="font-semibold">[{item.user}]</span>{" "}
+                      {item.action} "{item.app}"
                     </p>
                     <p className="text-xs text-slate-500 mt-1">{item.time}</p>
                   </div>
@@ -208,7 +251,9 @@ export default function ProDeveloperDashboard() {
             {/* Performance Stats */}
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white text-base">Your Performance</CardTitle>
+                <CardTitle className="text-white text-base">
+                  Your Performance
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -228,6 +273,6 @@ export default function ProDeveloperDashboard() {
           </div>
         </div>
       </main>
-    </>
-  )
+    </RoleLayout>
+  );
 }

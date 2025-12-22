@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { MainNav } from "@/components/layout/main-nav";
+import { RoleLayout } from "@/components/layout/role-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -121,46 +121,22 @@ export default function EnvironmentDetailPage() {
     }
   };
 
-  const navItems = [
-    { label: "My Workspace", href: "/citizen-developer" },
-    { label: "My Changes", href: "/citizen-developer/changes" },
-    { label: "Request Review", href: "/citizen-developer/review" },
-    { label: "Connectors", href: "/citizen-developer/connectors" },
-    { label: "Learning Hub", href: "/citizen-developer/learning" },
-  ];
-
   // Loading state
   if (envLoading) {
     return (
-      <>
-        <MainNav
-          title="Citizen Developer Portal"
-          navItems={navItems}
-          userRole="Citizen Developer"
-          userName="Sarah K."
-          userInitials="SK"
-          notificationCount={2}
-        />
+      <RoleLayout>
         <main className="container mx-auto px-6 py-8">
           <Skeleton className="h-12 w-64 mb-6" />
           <Skeleton className="h-64 w-full" />
         </main>
-      </>
+      </RoleLayout>
     );
   }
 
   // Error state
   if (envError || !environment) {
     return (
-      <>
-        <MainNav
-          title="Citizen Developer Portal"
-          navItems={navItems}
-          userRole="Citizen Developer"
-          userName="Sarah K."
-          userInitials="SK"
-          notificationCount={2}
-        />
+      <RoleLayout>
         <main className="container mx-auto px-6 py-8">
           <Alert className="bg-red-900/50 border-red-800">
             <AlertCircle className="h-4 w-4" />
@@ -175,23 +151,14 @@ export default function EnvironmentDetailPage() {
             Back to Workspace
           </Button>
         </main>
-      </>
+      </RoleLayout>
     );
   }
 
   const icon = environment.platform === "POWERAPPS" ? "⚡" : "🔷";
 
   return (
-    <>
-      <MainNav
-        title="Citizen Developer Portal"
-        navItems={navItems}
-        userRole="Citizen Developer"
-        userName="Sarah K."
-        userInitials="SK"
-        notificationCount={2}
-      />
-
+    <RoleLayout>
       <div className="bg-slate-900 border-b border-slate-800">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
@@ -443,6 +410,6 @@ export default function EnvironmentDetailPage() {
           />
         )}
       </main>
-    </>
+    </RoleLayout>
   );
 }

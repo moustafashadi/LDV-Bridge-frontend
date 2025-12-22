@@ -2,19 +2,20 @@
 // USERS HOOKS (React Query)
 // ============================================
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
-import * as usersApi from '@/lib/api/users-api';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import * as usersApi from "@/lib/api/users-api";
 
 // Query keys
 export const userKeys = {
-  all: ['users'] as const,
-  lists: () => [...userKeys.all, 'list'] as const,
-  list: (params?: usersApi.ListUsersParams) => [...userKeys.lists(), params] as const,
-  details: () => [...userKeys.all, 'detail'] as const,
+  all: ["users"] as const,
+  lists: () => [...userKeys.all, "list"] as const,
+  list: (params?: usersApi.ListUsersParams) =>
+    [...userKeys.lists(), params] as const,
+  details: () => [...userKeys.all, "detail"] as const,
   detail: (id: string) => [...userKeys.details(), id] as const,
-  me: () => [...userKeys.all, 'me'] as const,
-  invitations: () => [...userKeys.all, 'invitations'] as const,
+  me: () => [...userKeys.all, "me"] as const,
+  invitations: () => [...userKeys.all, "invitations"] as const,
 };
 
 /**
@@ -75,15 +76,15 @@ export function useInviteUser() {
       queryClient.invalidateQueries({ queryKey: userKeys.invitations() });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast({
-        title: 'Invitation sent',
-        description: 'User invitation has been sent successfully.',
+        title: "Invitation sent",
+        description: "User invitation has been sent successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: 'Failed to send invitation',
-        description: error.response?.data?.message || 'An error occurred',
-        variant: 'destructive',
+        title: "Failed to send invitation",
+        description: error.response?.data?.message || "An error occurred",
+        variant: "destructive",
       });
     },
   });
@@ -104,15 +105,15 @@ export function useUpdateUser() {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.me() });
       toast({
-        title: 'User updated',
-        description: 'User has been updated successfully.',
+        title: "User updated",
+        description: "User has been updated successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: 'Failed to update user',
-        description: error.response?.data?.message || 'An error occurred',
-        variant: 'destructive',
+        title: "Failed to update user",
+        description: error.response?.data?.message || "An error occurred",
+        variant: "destructive",
       });
     },
   });
@@ -126,21 +127,26 @@ export function useUpdateUserRole() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: ({ id, role }: { id: string; role: usersApi.UpdateUserRoleDto['role'] }) =>
-      usersApi.updateUserRole(id, { role }),
+    mutationFn: ({
+      id,
+      role,
+    }: {
+      id: string;
+      role: usersApi.UpdateUserRoleDto["role"];
+    }) => usersApi.updateUserRole(id, { role }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(data.id) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast({
-        title: 'Role updated',
-        description: 'User role has been updated successfully.',
+        title: "Role updated",
+        description: "User role has been updated successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: 'Failed to update role',
-        description: error.response?.data?.message || 'An error occurred',
-        variant: 'destructive',
+        title: "Failed to update role",
+        description: error.response?.data?.message || "An error occurred",
+        variant: "destructive",
       });
     },
   });
@@ -158,15 +164,15 @@ export function useRevokeInvitation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.invitations() });
       toast({
-        title: 'Invitation revoked',
-        description: 'User invitation has been revoked.',
+        title: "Invitation revoked",
+        description: "User invitation has been revoked.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: 'Failed to revoke invitation',
-        description: error.response?.data?.message || 'An error occurred',
-        variant: 'destructive',
+        title: "Failed to revoke invitation",
+        description: error.response?.data?.message || "An error occurred",
+        variant: "destructive",
       });
     },
   });
@@ -185,15 +191,15 @@ export function useDeactivateUser() {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(data.id) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast({
-        title: 'User deactivated',
-        description: 'User has been deactivated successfully.',
+        title: "User deactivated",
+        description: "User has been deactivated successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: 'Failed to deactivate user',
-        description: error.response?.data?.message || 'An error occurred',
-        variant: 'destructive',
+        title: "Failed to deactivate user",
+        description: error.response?.data?.message || "An error occurred",
+        variant: "destructive",
       });
     },
   });
@@ -212,15 +218,15 @@ export function useReactivateUser() {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(data.id) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast({
-        title: 'User reactivated',
-        description: 'User has been reactivated successfully.',
+        title: "User reactivated",
+        description: "User has been reactivated successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: 'Failed to reactivate user',
-        description: error.response?.data?.message || 'An error occurred',
-        variant: 'destructive',
+        title: "Failed to reactivate user",
+        description: error.response?.data?.message || "An error occurred",
+        variant: "destructive",
       });
     },
   });
@@ -239,15 +245,15 @@ export function useSuspendUser() {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(data.id) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast({
-        title: 'User suspended',
-        description: 'User has been suspended successfully.',
+        title: "User suspended",
+        description: "User has been suspended successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: 'Failed to suspend user',
-        description: error.response?.data?.message || 'An error occurred',
-        variant: 'destructive',
+        title: "Failed to suspend user",
+        description: error.response?.data?.message || "An error occurred",
+        variant: "destructive",
       });
     },
   });

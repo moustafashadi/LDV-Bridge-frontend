@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import { MainNav } from "@/components/layout/main-nav"
-import { PageHeader } from "@/components/layout/page-header"
-import { Card, CardContent } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { RoleLayout } from "@/components/layout/role-layout";
+import { PageHeader } from "@/components/layout/page-header";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function MyChanges() {
-  const navItems = [
-    { label: "My Sandbox", href: "/citizen-developer" },
-    { label: "My Changes", href: "/citizen-developer/changes" },
-    { label: "Request Review", href: "/citizen-developer/review" },
-    { label: "Learning Hub", href: "/citizen-developer/learning" },
-  ]
-
   const changes = [
     {
       app: "Marketing Campaign Tracker",
@@ -35,19 +35,14 @@ export default function MyChanges() {
       reviewer: "-",
       components: 2,
     },
-  ]
+  ];
 
   return (
-    <>
-      <MainNav
-        title="Citizen Developer Portal"
-        navItems={navItems}
-        userRole="Citizen Developer"
-        userName="Sarah K."
-        userInitials="SK"
+    <RoleLayout>
+      <PageHeader
+        title="My Changes"
+        description="Track all your submissions and their status"
       />
-
-      <PageHeader title="My Changes" description="Track all your submissions and their status" />
 
       <main className="container mx-auto px-6 py-8">
         <Card className="bg-slate-800 border-slate-700">
@@ -65,27 +60,39 @@ export default function MyChanges() {
                 </TableHeader>
                 <TableBody>
                   {changes.map((change, idx) => (
-                    <TableRow key={idx} className="border-b border-slate-700 hover:bg-slate-700/50">
-                      <TableCell className="text-white font-medium">{change.app}</TableCell>
+                    <TableRow
+                      key={idx}
+                      className="border-b border-slate-700 hover:bg-slate-700/50"
+                    >
+                      <TableCell className="text-white font-medium">
+                        {change.app}
+                      </TableCell>
                       <TableCell>
                         <span
                           className={`inline-flex items-center gap-1 text-sm ${
                             change.status === "pending"
                               ? "text-yellow-400"
                               : change.status === "approved"
-                                ? "text-green-400"
-                                : "text-slate-400"
+                              ? "text-green-400"
+                              : "text-slate-400"
                           }`}
                         >
                           {change.status === "pending" && "🟡"}
                           {change.status === "approved" && "✅"}
                           {change.status === "draft" && "⚪"}
-                          {change.status.charAt(0).toUpperCase() + change.status.slice(1)}
+                          {change.status.charAt(0).toUpperCase() +
+                            change.status.slice(1)}
                         </span>
                       </TableCell>
-                      <TableCell className="text-slate-300">{change.submitted}</TableCell>
-                      <TableCell className="text-slate-300">{change.reviewer}</TableCell>
-                      <TableCell className="text-slate-300">{change.components}</TableCell>
+                      <TableCell className="text-slate-300">
+                        {change.submitted}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {change.reviewer}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {change.components}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -94,6 +101,6 @@ export default function MyChanges() {
           </CardContent>
         </Card>
       </main>
-    </>
-  )
+    </RoleLayout>
+  );
 }

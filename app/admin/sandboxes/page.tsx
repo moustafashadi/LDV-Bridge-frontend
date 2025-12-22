@@ -2,15 +2,44 @@
 
 import { useState } from "react";
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import { MainNav } from "@/components/layout/main-nav";
+import { RoleLayout } from "@/components/layout/role-layout";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Filter, RefreshCw, Play, Square, Trash2, Clock, Server } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Plus,
+  Search,
+  Filter,
+  RefreshCw,
+  Play,
+  Square,
+  Trash2,
+  Clock,
+  Server,
+} from "lucide-react";
 import Link from "next/link";
 
 // Mock data for now - will be replaced with API calls
@@ -83,28 +112,23 @@ export default function AdminSandboxesPage() {
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const navItems = [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Users", href: "/admin/users" },
-    { label: "Sandboxes", href: "/admin/sandboxes", active: true },
-    { label: "Connectors", href: "/admin/connectors" },
-    { label: "Policies", href: "/admin/policies" },
-    { label: "Compliance", href: "/admin/compliance" },
-  ];
-
   const filteredSandboxes = mockSandboxes.filter((sandbox) => {
-    const matchesSearch = sandbox.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch =
+      sandbox.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       sandbox.owner.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPlatform = platformFilter === "all" || sandbox.platform === platformFilter;
-    const matchesStatus = statusFilter === "all" || sandbox.status === statusFilter;
+    const matchesPlatform =
+      platformFilter === "all" || sandbox.platform === platformFilter;
+    const matchesStatus =
+      statusFilter === "all" || sandbox.status === statusFilter;
     return matchesSearch && matchesPlatform && matchesStatus;
   });
 
   const stats = {
     total: mockSandboxes.length,
-    active: mockSandboxes.filter(s => s.status === "ACTIVE").length,
-    stopped: mockSandboxes.filter(s => s.status === "STOPPED").length,
-    provisioning: mockSandboxes.filter(s => s.status === "PROVISIONING").length,
+    active: mockSandboxes.filter((s) => s.status === "ACTIVE").length,
+    stopped: mockSandboxes.filter((s) => s.status === "STOPPED").length,
+    provisioning: mockSandboxes.filter((s) => s.status === "PROVISIONING")
+      .length,
   };
 
   const formatDate = (dateString: string) => {
@@ -112,7 +136,7 @@ export default function AdminSandboxesPage() {
     const now = new Date();
     const diff = date.getTime() - now.getTime();
     const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-    
+
     if (days < 0) return "Expired";
     if (days === 0) return "Today";
     if (days === 1) return "Tomorrow";
@@ -121,16 +145,7 @@ export default function AdminSandboxesPage() {
   };
 
   return (
-    <>
-    
-      <MainNav
-        title="Admin Portal"
-        navItems={navItems}
-        userRole="Admin"
-        userName="Admin User"
-        userInitials="AU"
-      />
-
+    <RoleLayout>
       <PageHeader
         title="Sandbox Management"
         description="Manage development environments across PowerApps and Mendix"
@@ -141,26 +156,42 @@ export default function AdminSandboxesPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="bg-slate-800 border-slate-700">
             <CardHeader className="pb-3">
-              <CardDescription className="text-slate-400">Total Sandboxes</CardDescription>
-              <CardTitle className="text-3xl text-white">{stats.total}</CardTitle>
+              <CardDescription className="text-slate-400">
+                Total Sandboxes
+              </CardDescription>
+              <CardTitle className="text-3xl text-white">
+                {stats.total}
+              </CardTitle>
             </CardHeader>
           </Card>
           <Card className="bg-slate-800 border-slate-700">
             <CardHeader className="pb-3">
-              <CardDescription className="text-slate-400">Active</CardDescription>
-              <CardTitle className="text-3xl text-green-400">{stats.active}</CardTitle>
+              <CardDescription className="text-slate-400">
+                Active
+              </CardDescription>
+              <CardTitle className="text-3xl text-green-400">
+                {stats.active}
+              </CardTitle>
             </CardHeader>
           </Card>
           <Card className="bg-slate-800 border-slate-700">
             <CardHeader className="pb-3">
-              <CardDescription className="text-slate-400">Stopped</CardDescription>
-              <CardTitle className="text-3xl text-gray-400">{stats.stopped}</CardTitle>
+              <CardDescription className="text-slate-400">
+                Stopped
+              </CardDescription>
+              <CardTitle className="text-3xl text-gray-400">
+                {stats.stopped}
+              </CardTitle>
             </CardHeader>
           </Card>
           <Card className="bg-slate-800 border-slate-700">
             <CardHeader className="pb-3">
-              <CardDescription className="text-slate-400">Provisioning</CardDescription>
-              <CardTitle className="text-3xl text-blue-400">{stats.provisioning}</CardTitle>
+              <CardDescription className="text-slate-400">
+                Provisioning
+              </CardDescription>
+              <CardTitle className="text-3xl text-blue-400">
+                {stats.provisioning}
+              </CardTitle>
             </CardHeader>
           </Card>
         </div>
@@ -220,7 +251,11 @@ export default function AdminSandboxesPage() {
                   {filteredSandboxes.length} of {mockSandboxes.length} sandboxes
                 </CardDescription>
               </div>
-              <Button variant="outline" size="sm" className="border-slate-600 text-slate-300">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-slate-600 text-slate-300"
+              >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>
@@ -238,33 +273,61 @@ export default function AdminSandboxesPage() {
                     <TableHead className="text-slate-300">Owner</TableHead>
                     <TableHead className="text-slate-300">Resources</TableHead>
                     <TableHead className="text-slate-300">Expires</TableHead>
-                    <TableHead className="text-slate-300 text-right">Actions</TableHead>
+                    <TableHead className="text-slate-300 text-right">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredSandboxes.map((sandbox) => (
-                    <TableRow key={sandbox.id} className="border-slate-700 hover:bg-slate-700/50">
+                    <TableRow
+                      key={sandbox.id}
+                      className="border-slate-700 hover:bg-slate-700/50"
+                    >
                       <TableCell className="font-medium text-white">
-                        <Link href={`/admin/sandboxes/${sandbox.id}`} className="hover:text-blue-400">
+                        <Link
+                          href={`/admin/sandboxes/${sandbox.id}`}
+                          className="hover:text-blue-400"
+                        >
                           {sandbox.name}
                         </Link>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={platformColors[sandbox.platform as keyof typeof platformColors]}>
+                        <Badge
+                          variant="outline"
+                          className={
+                            platformColors[
+                              sandbox.platform as keyof typeof platformColors
+                            ]
+                          }
+                        >
                           {sandbox.platform}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={statusColors[sandbox.status as keyof typeof statusColors]}>
+                        <Badge
+                          variant="outline"
+                          className={
+                            statusColors[
+                              sandbox.status as keyof typeof statusColors
+                            ]
+                          }
+                        >
                           {sandbox.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-slate-300">{sandbox.type}</TableCell>
-                      <TableCell className="text-slate-300">{sandbox.owner}</TableCell>
+                      <TableCell className="text-slate-300">
+                        {sandbox.type}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {sandbox.owner}
+                      </TableCell>
                       <TableCell className="text-slate-400 text-sm">
                         <div className="space-y-1">
                           <div>{sandbox.resourceUsage.apps} apps</div>
-                          <div className="text-xs">{sandbox.resourceUsage.apiCalls} API calls</div>
+                          <div className="text-xs">
+                            {sandbox.resourceUsage.apiCalls} API calls
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-slate-400">
@@ -275,17 +338,31 @@ export default function AdminSandboxesPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {sandbox.status === "STOPPED" && sandbox.platform === "MENDIX" && (
-                            <Button variant="ghost" size="sm" className="text-green-400 hover:text-green-300">
-                              <Play className="w-4 h-4" />
-                            </Button>
-                          )}
-                          {sandbox.status === "ACTIVE" && sandbox.platform === "MENDIX" && (
-                            <Button variant="ghost" size="sm" className="text-yellow-400 hover:text-yellow-300">
-                              <Square className="w-4 h-4" />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300">
+                          {sandbox.status === "STOPPED" &&
+                            sandbox.platform === "MENDIX" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-400 hover:text-green-300"
+                              >
+                                <Play className="w-4 h-4" />
+                              </Button>
+                            )}
+                          {sandbox.status === "ACTIVE" &&
+                            sandbox.platform === "MENDIX" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-yellow-400 hover:text-yellow-300"
+                              >
+                                <Square className="w-4 h-4" />
+                              </Button>
+                            )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-400 hover:text-red-300"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -298,6 +375,6 @@ export default function AdminSandboxesPage() {
           </CardContent>
         </Card>
       </main>
-    </>
+    </RoleLayout>
   );
 }

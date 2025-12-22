@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { MainNav } from "@/components/layout/main-nav"
-import { PageHeader } from "@/components/layout/page-header"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { ChevronLeft, Send } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { RoleLayout } from "@/components/layout/role-layout";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { ChevronLeft, Send } from "lucide-react";
 
 export default function ReviewStatus({ params }: { params: { id: string } }) {
   const [comments, setComments] = useState([
@@ -15,33 +15,22 @@ export default function ReviewStatus({ params }: { params: { id: string } }) {
       author: "John Miller",
       role: "Pro Dev",
       time: "30 min ago",
-      message: "Quick question - should this export include historical data or just current campaigns?",
+      message:
+        "Quick question - should this export include historical data or just current campaigns?",
     },
-  ])
-  const [newComment, setNewComment] = useState("")
-
-  const navItems = [
-    { label: "My Sandbox", href: "/citizen-developer" },
-    { label: "My Changes", href: "/citizen-developer/changes" },
-    { label: "Request Review", href: "/citizen-developer/review" },
-    { label: "Learning Hub", href: "/citizen-developer/learning" },
-  ]
+  ]);
+  const [newComment, setNewComment] = useState("");
 
   return (
-    <>
-      <MainNav
-        title="Citizen Developer Portal"
-        navItems={navItems}
-        userRole="Citizen Developer"
-        userName="Sarah K."
-        userInitials="SK"
-      />
-
+    <RoleLayout>
       <PageHeader
         title="Review Status: Marketing Campaign Tracker v2.1"
         actions={
           <Link href="/citizen-developer">
-            <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white bg-transparent">
+            <Button
+              variant="outline"
+              className="border-slate-600 text-slate-300 hover:text-white bg-transparent"
+            >
               <ChevronLeft className="w-4 h-4 mr-2" />
               Back to My Apps
             </Button>
@@ -65,8 +54,12 @@ export default function ReviewStatus({ params }: { params: { id: string } }) {
                       <div className="w-1 h-12 bg-slate-700 mt-2"></div>
                     </div>
                     <div>
-                      <p className="font-semibold text-white">Submitted by You</p>
-                      <p className="text-sm text-slate-400">Oct 20, 2025 at 2:30 PM</p>
+                      <p className="font-semibold text-white">
+                        Submitted by You
+                      </p>
+                      <p className="text-sm text-slate-400">
+                        Oct 20, 2025 at 2:30 PM
+                      </p>
                     </div>
                   </div>
 
@@ -79,10 +72,18 @@ export default function ReviewStatus({ params }: { params: { id: string } }) {
                       <div className="w-1 h-12 bg-slate-700 mt-2"></div>
                     </div>
                     <div>
-                      <p className="font-semibold text-white">Under Review by John Miller (Pro Dev)</p>
-                      <p className="text-sm text-slate-400">Started: Oct 20, 2025 at 3:15 PM</p>
-                      <p className="text-sm text-slate-400">Est. completion: Oct 21, 2025</p>
-                      <p className="text-sm text-blue-400 mt-2">💬 2 comments</p>
+                      <p className="font-semibold text-white">
+                        Under Review by John Miller (Pro Dev)
+                      </p>
+                      <p className="text-sm text-slate-400">
+                        Started: Oct 20, 2025 at 3:15 PM
+                      </p>
+                      <p className="text-sm text-slate-400">
+                        Est. completion: Oct 21, 2025
+                      </p>
+                      <p className="text-sm text-blue-400 mt-2">
+                        💬 2 comments
+                      </p>
                     </div>
                   </div>
 
@@ -94,7 +95,9 @@ export default function ReviewStatus({ params }: { params: { id: string } }) {
                       </div>
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-400">Awaiting Approval</p>
+                      <p className="font-semibold text-slate-400">
+                        Awaiting Approval
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -104,20 +107,30 @@ export default function ReviewStatus({ params }: { params: { id: string } }) {
             {/* Comments */}
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white">Conversation with Review Team</CardTitle>
+                <CardTitle className="text-white">
+                  Conversation with Review Team
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {comments.map((comment, idx) => (
-                  <div key={idx} className="pb-6 border-b border-slate-700 last:border-0 last:pb-0">
+                  <div
+                    key={idx}
+                    className="pb-6 border-b border-slate-700 last:border-0 last:pb-0"
+                  >
                     <div className="flex gap-3">
                       <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0">
                         {comment.author[0]}
                       </div>
                       <div className="flex-1">
                         <p className="font-semibold text-white">
-                          {comment.author} <span className="text-sm text-slate-400 font-normal">- {comment.role}</span>
+                          {comment.author}{" "}
+                          <span className="text-sm text-slate-400 font-normal">
+                            - {comment.role}
+                          </span>
                         </p>
-                        <p className="text-xs text-slate-500 mb-2">{comment.time}</p>
+                        <p className="text-xs text-slate-500 mb-2">
+                          {comment.time}
+                        </p>
                         <p className="text-slate-300">{comment.message}</p>
                       </div>
                     </div>
@@ -126,7 +139,9 @@ export default function ReviewStatus({ params }: { params: { id: string } }) {
 
                 {/* Reply Input */}
                 <div className="mt-6 pt-6 border-t border-slate-700">
-                  <p className="text-sm font-semibold text-white mb-3">Your Reply:</p>
+                  <p className="text-sm font-semibold text-white mb-3">
+                    Your Reply:
+                  </p>
                   <Textarea
                     placeholder="Type your response..."
                     value={newComment}
@@ -146,11 +161,15 @@ export default function ReviewStatus({ params }: { params: { id: string } }) {
           <div>
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white text-base">What's Being Reviewed</CardTitle>
+                <CardTitle className="text-white text-base">
+                  What's Being Reviewed
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="text-sm">
-                  <p className="font-semibold text-slate-300 mb-2">Modified Components:</p>
+                  <p className="font-semibold text-slate-300 mb-2">
+                    Modified Components:
+                  </p>
                   <ul className="space-y-1 text-slate-400 text-xs">
                     <li>✏️ Submit Button - Color changed</li>
                     <li>✏️ Email Field - Validation added</li>
@@ -168,6 +187,6 @@ export default function ReviewStatus({ params }: { params: { id: string } }) {
           </div>
         </div>
       </main>
-    </>
-  )
+    </RoleLayout>
+  );
 }

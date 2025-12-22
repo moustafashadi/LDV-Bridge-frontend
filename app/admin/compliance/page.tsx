@@ -1,20 +1,12 @@
-"use client"
+"use client";
 
-import { MainNav } from "@/components/layout/main-nav"
-import { PageHeader } from "@/components/layout/page-header"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Download, FileText } from "lucide-react"
+import { RoleLayout } from "@/components/layout/role-layout";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Download, FileText } from "lucide-react";
 
 export default function ComplianceReports() {
-  const navItems = [
-    { label: "Analytics", href: "/admin" },
-    { label: "Policies", href: "/admin/policies" },
-    { label: "Connectors", href: "/admin/connectors" },
-    { label: "Users", href: "/admin/users" },
-    { label: "Compliance", href: "/admin/compliance" },
-  ]
-
   const templates = [
     {
       name: "SOX Compliance Report",
@@ -32,7 +24,7 @@ export default function ComplianceReports() {
       name: "Custom Report",
       description: "Build your own compliance report",
     },
-  ]
+  ];
 
   const recentReports = [
     {
@@ -49,24 +41,21 @@ export default function ComplianceReports() {
       by: "Compliance Officer",
       size: "1.8 MB",
     },
-  ]
+  ];
 
   return (
-    <>
-      <MainNav
-        title="Admin Console"
-        navItems={navItems}
-        userRole="Administrator"
-        userName="Admin User"
-        userInitials="AU"
+    <RoleLayout>
+      <PageHeader
+        title="Compliance Reports"
+        description="Generate and view compliance reports for audits"
       />
-
-      <PageHeader title="Compliance Reports" description="Generate and view compliance reports for audits" />
 
       <main className="container mx-auto px-6 py-8">
         {/* Report Templates */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">Report Templates</h2>
+          <h2 className="text-2xl font-bold text-white mb-6">
+            Report Templates
+          </h2>
           <div className="grid md:grid-cols-2 gap-4">
             {templates.map((template, idx) => (
               <Card
@@ -77,9 +66,15 @@ export default function ComplianceReports() {
                   <div className="flex items-start justify-between mb-3">
                     <FileText className="w-8 h-8 text-blue-400" />
                   </div>
-                  <h3 className="font-semibold text-white mb-2">{template.name}</h3>
-                  <p className="text-sm text-slate-400 mb-4">{template.description}</p>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">Generate</Button>
+                  <h3 className="font-semibold text-white mb-2">
+                    {template.name}
+                  </h3>
+                  <p className="text-sm text-slate-400 mb-4">
+                    {template.description}
+                  </p>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    Generate
+                  </Button>
                 </CardContent>
               </Card>
             ))}
@@ -99,12 +94,18 @@ export default function ComplianceReports() {
                   <div>
                     <h3 className="font-semibold text-white">{report.name}</h3>
                     <p className="text-sm text-slate-400">
-                      {report.period} • Generated {report.generated} by {report.by}
+                      {report.period} • Generated {report.generated} by{" "}
+                      {report.by}
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm text-slate-400">{report.size}</span>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2">
+                    <span className="text-sm text-slate-400">
+                      {report.size}
+                    </span>
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+                    >
                       <Download className="w-4 h-4" />
                       Download
                     </Button>
@@ -115,6 +116,6 @@ export default function ComplianceReports() {
           </Card>
         </section>
       </main>
-    </>
-  )
+    </RoleLayout>
+  );
 }

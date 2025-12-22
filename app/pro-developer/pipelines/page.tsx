@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { MainNav } from "@/components/layout/main-nav"
-import { PageHeader } from "@/components/layout/page-header"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { RoleLayout } from "@/components/layout/role-layout";
+import { PageHeader } from "@/components/layout/page-header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function CICDPipelines() {
-  const navItems = [
-    { label: "Review Queue", href: "/pro-developer" },
-    { label: "Change History", href: "/pro-developer/history" },
-    { label: "CI/CD Pipelines", href: "/pro-developer/pipelines" },
-    { label: "Audit Logs", href: "/pro-developer/audit" },
-  ]
-
   const pipelines = [
     {
       app: "Customer Portal",
@@ -39,18 +39,10 @@ export default function CICDPipelines() {
       triggered: "Scheduled",
       time: "08:00 AM",
     },
-  ]
+  ];
 
   return (
-    <>
-      <MainNav
-        title="Professional Developer Dashboard"
-        navItems={navItems}
-        userRole="Professional Developer"
-        userName="John M."
-        userInitials="JM"
-      />
-
+    <RoleLayout>
       <PageHeader
         title="CI/CD Pipeline Dashboard"
         description="Monitor automated build, test, and deployment pipelines"
@@ -60,7 +52,9 @@ export default function CICDPipelines() {
         {/* Featured Pipeline */}
         <Card className="bg-slate-800 border-slate-700 mb-8">
           <CardHeader>
-            <CardTitle className="text-white">Customer Portal - v3.2 Pipeline</CardTitle>
+            <CardTitle className="text-white">
+              Customer Portal - v3.2 Pipeline
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
@@ -68,7 +62,9 @@ export default function CICDPipelines() {
                 <span className="text-2xl">✅</span>
                 <div>
                   <p className="font-semibold text-green-400">Passed</p>
-                  <p className="text-sm text-slate-400">5 min ago | Duration: 3m 42s</p>
+                  <p className="text-sm text-slate-400">
+                    5 min ago | Duration: 3m 42s
+                  </p>
                 </div>
               </div>
             </div>
@@ -100,15 +96,23 @@ export default function CICDPipelines() {
             <div className="space-y-2 text-sm text-slate-300">
               <p>Build: Artifacts packaged successfully</p>
               <p>Test: 47/47 tests passed</p>
-              <p className="text-yellow-400">Security Scan: 2 warnings (non-blocking)</p>
+              <p className="text-yellow-400">
+                Security Scan: 2 warnings (non-blocking)
+              </p>
               <p>Deploy: Deployed to production (10:05 AM)</p>
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" className="border-slate-600 text-slate-300 bg-transparent">
+              <Button
+                variant="outline"
+                className="border-slate-600 text-slate-300 bg-transparent"
+              >
                 View Full Logs
               </Button>
-              <Button variant="outline" className="border-slate-600 text-slate-300 bg-transparent">
+              <Button
+                variant="outline"
+                className="border-slate-600 text-slate-300 bg-transparent"
+              >
                 Re-run Pipeline
               </Button>
             </div>
@@ -129,28 +133,45 @@ export default function CICDPipelines() {
                     <TableHead className="text-slate-300">Version</TableHead>
                     <TableHead className="text-slate-300">Status</TableHead>
                     <TableHead className="text-slate-300">Duration</TableHead>
-                    <TableHead className="text-slate-300">Triggered By</TableHead>
+                    <TableHead className="text-slate-300">
+                      Triggered By
+                    </TableHead>
                     <TableHead className="text-slate-300">Time</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {pipelines.map((pipeline, idx) => (
-                    <TableRow key={idx} className="border-b border-slate-700 hover:bg-slate-700/50">
-                      <TableCell className="text-white font-medium">{pipeline.app}</TableCell>
-                      <TableCell className="text-slate-300">{pipeline.version}</TableCell>
+                    <TableRow
+                      key={idx}
+                      className="border-b border-slate-700 hover:bg-slate-700/50"
+                    >
+                      <TableCell className="text-white font-medium">
+                        {pipeline.app}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {pipeline.version}
+                      </TableCell>
                       <TableCell>
                         <span
                           className={`inline-flex items-center gap-1 ${
-                            pipeline.status === "passed" ? "text-green-400" : "text-red-400"
+                            pipeline.status === "passed"
+                              ? "text-green-400"
+                              : "text-red-400"
                           }`}
                         >
                           {pipeline.status === "passed" ? "✅" : "❌"}{" "}
                           {pipeline.status === "passed" ? "Passed" : "Failed"}
                         </span>
                       </TableCell>
-                      <TableCell className="text-slate-300">{pipeline.duration}</TableCell>
-                      <TableCell className="text-slate-300">{pipeline.triggered}</TableCell>
-                      <TableCell className="text-slate-400 text-sm">{pipeline.time}</TableCell>
+                      <TableCell className="text-slate-300">
+                        {pipeline.duration}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {pipeline.triggered}
+                      </TableCell>
+                      <TableCell className="text-slate-400 text-sm">
+                        {pipeline.time}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -159,6 +180,6 @@ export default function CICDPipelines() {
           </CardContent>
         </Card>
       </main>
-    </>
-  )
+    </RoleLayout>
+  );
 }

@@ -3,7 +3,7 @@
 import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MainNav } from "@/components/layout/main-nav";
+import { RoleLayout } from "@/components/layout/role-layout";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/layout/status-badge";
 import { Button } from "@/components/ui/button";
@@ -74,12 +74,6 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
     },
   });
 
-  const navItems = [
-    { label: "My Workspace", href: "/citizen-developer" },
-    { label: "Changes", href: "/citizen-developer/changes" },
-    { label: "Learning", href: "/citizen-developer/learning" },
-  ];
-
   // Get platform info
   const getPlatformIcon = (platform: string) => {
     if (platform === "POWERAPPS") return "⚡";
@@ -104,32 +98,18 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
 
   if (isLoading) {
     return (
-      <>
-        <MainNav
-          title="Citizen Developer Portal"
-          navItems={navItems}
-          userRole="Citizen Developer"
-          userName="User"
-          userInitials="U"
-        />
+      <RoleLayout>
         <div className="container mx-auto px-6 py-8">
           <Skeleton className="h-8 w-48 mb-6" />
           <Skeleton className="h-64 w-full" />
         </div>
-      </>
+      </RoleLayout>
     );
   }
 
   if (error || !app) {
     return (
-      <>
-        <MainNav
-          title="Citizen Developer Portal"
-          navItems={navItems}
-          userRole="Citizen Developer"
-          userName="User"
-          userInitials="U"
-        />
+      <RoleLayout>
         <div className="container mx-auto px-6 py-8">
           <Alert className="bg-red-500/10 border-red-500/50">
             <AlertCircle className="h-4 w-4 text-red-400" />
@@ -147,7 +127,7 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
             Back to Workspace
           </Button>
         </div>
-      </>
+      </RoleLayout>
     );
   }
 
@@ -160,15 +140,7 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
   const environment = app.metadata?.properties?.environment;
 
   return (
-    <>
-      <MainNav
-        title="Citizen Developer Portal"
-        navItems={navItems}
-        userRole="Citizen Developer"
-        userName={app.owner?.name || app.owner?.email || "User"}
-        userInitials={(app.owner?.email || "U")[0].toUpperCase()}
-      />
-
+    <RoleLayout>
       <PageHeader
         title={`${getPlatformIcon(app.platform)} ${app.name}`}
         description={app.description || `${app.platform} application`}
@@ -476,6 +448,6 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
           </Tabs>
         </Card>
       </main>
-    </>
+    </RoleLayout>
   );
 }

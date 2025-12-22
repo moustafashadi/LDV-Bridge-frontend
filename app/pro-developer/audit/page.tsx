@@ -1,19 +1,25 @@
-"use client"
+"use client";
 
-import { MainNav } from "@/components/layout/main-nav"
-import { PageHeader } from "@/components/layout/page-header"
-import { Card, CardContent } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { RoleLayout } from "@/components/layout/role-layout";
+import { PageHeader } from "@/components/layout/page-header";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function AuditLogs() {
-  const navItems = [
-    { label: "Review Queue", href: "/pro-developer" },
-    { label: "Change History", href: "/pro-developer/history" },
-    { label: "CI/CD Pipelines", href: "/pro-developer/pipelines" },
-    { label: "Audit Logs", href: "/pro-developer/audit" },
-  ]
-
   const logs = [
     {
       timestamp: "Oct 24, 10:05 AM",
@@ -36,19 +42,14 @@ export default function AuditLogs() {
       app: "Marketing Tracker v1.9",
       details: "Deployed to production",
     },
-  ]
+  ];
 
   return (
-    <>
-      <MainNav
-        title="Professional Developer Dashboard"
-        navItems={navItems}
-        userRole="Professional Developer"
-        userName="John M."
-        userInitials="JM"
+    <RoleLayout>
+      <PageHeader
+        title="Audit Logs"
+        description="Complete audit trail of all platform activities"
       />
-
-      <PageHeader title="Audit Logs" description="Complete audit trail of all platform activities" />
 
       <main className="container mx-auto px-6 py-8">
         {/* Filters */}
@@ -92,24 +93,35 @@ export default function AuditLogs() {
                 </TableHeader>
                 <TableBody>
                   {logs.map((log, idx) => (
-                    <TableRow key={idx} className="border-b border-slate-700 hover:bg-slate-700/50">
-                      <TableCell className="text-slate-300 text-sm">{log.timestamp}</TableCell>
-                      <TableCell className="text-white font-medium">{log.user}</TableCell>
+                    <TableRow
+                      key={idx}
+                      className="border-b border-slate-700 hover:bg-slate-700/50"
+                    >
+                      <TableCell className="text-slate-300 text-sm">
+                        {log.timestamp}
+                      </TableCell>
+                      <TableCell className="text-white font-medium">
+                        {log.user}
+                      </TableCell>
                       <TableCell>
                         <span
                           className={`inline-flex items-center gap-1 text-sm ${
                             log.action === "Approved"
                               ? "text-green-400"
                               : log.action === "Requested Changes"
-                                ? "text-yellow-400"
-                                : "text-blue-400"
+                              ? "text-yellow-400"
+                              : "text-blue-400"
                           }`}
                         >
                           {log.action}
                         </span>
                       </TableCell>
-                      <TableCell className="text-slate-300">{log.app}</TableCell>
-                      <TableCell className="text-slate-400 text-sm">{log.details}</TableCell>
+                      <TableCell className="text-slate-300">
+                        {log.app}
+                      </TableCell>
+                      <TableCell className="text-slate-400 text-sm">
+                        {log.details}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -118,6 +130,6 @@ export default function AuditLogs() {
           </CardContent>
         </Card>
       </main>
-    </>
-  )
+    </RoleLayout>
+  );
 }

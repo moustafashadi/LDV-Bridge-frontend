@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { MainNav } from "@/components/layout/main-nav";
+import { RoleLayout } from "@/components/layout/role-layout";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,15 +64,6 @@ export default function GitHubConnectorPage() {
     }
   }, [searchParams, status?.connected, connectGitHub]);
 
-  const navItems = [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Connectors", href: "/admin/connectors" },
-    { label: "Sandboxes", href: "/admin/sandboxes" },
-    { label: "Policies", href: "/admin/policies" },
-    { label: "Users", href: "/admin/users" },
-    { label: "Compliance", href: "/admin/compliance" },
-  ];
-
   const handleConnect = () => {
     // The GitHub App installation URL
     if (status?.installationUrl) {
@@ -91,16 +82,7 @@ export default function GitHubConnectorPage() {
   };
 
   return (
-    <>
-      <MainNav
-        title="Admin Portal"
-        navItems={navItems}
-        userRole="Administrator"
-        userName="Admin User"
-        userInitials="AU"
-        notificationCount={3}
-      />
-
+    <RoleLayout>
       <PageHeader
         title="GitHub Integration"
         description="Connect GitHub for version control and collaborative reviews"
@@ -272,6 +254,6 @@ export default function GitHubConnectorPage() {
           )}
         </div>
       </main>
-    </>
+    </RoleLayout>
   );
 }

@@ -1,20 +1,19 @@
-"use client"
+"use client";
 
-import { MainNav } from "@/components/layout/main-nav"
-import { PageHeader } from "@/components/layout/page-header"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Download, RotateCcw } from "lucide-react"
+import { RoleLayout } from "@/components/layout/role-layout";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Download, RotateCcw } from "lucide-react";
 
 export default function ChangeHistory() {
-  const navItems = [
-    { label: "Review Queue", href: "/pro-developer" },
-    { label: "Change History", href: "/pro-developer/history" },
-    { label: "CI/CD Pipelines", href: "/pro-developer/pipelines" },
-    { label: "Audit Logs", href: "/pro-developer/audit" },
-  ]
-
   const changes = [
     {
       date: "Oct 24, 2025",
@@ -40,18 +39,10 @@ export default function ChangeHistory() {
       by: "Bob L.",
       approved: "Emma L.",
     },
-  ]
+  ];
 
   return (
-    <>
-      <MainNav
-        title="Professional Developer Dashboard"
-        navItems={navItems}
-        userRole="Professional Developer"
-        userName="John M."
-        userInitials="JM"
-      />
-
+    <RoleLayout>
       <PageHeader
         title="Change History & Audit Log"
         actions={
@@ -103,28 +94,44 @@ export default function ChangeHistory() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-white">{change.time}</p>
+                        <p className="font-semibold text-white">
+                          {change.time}
+                        </p>
                         <span className="text-xs text-slate-500">-</span>
                         <p className="text-sm text-slate-400">{change.date}</p>
                       </div>
                       <p className="text-white mb-2">
-                        {change.action === "Deployed" && `${change.app} Deployed`}
-                        {change.action === "Feedback sent" && `Feedback sent on ${change.app}`}
-                        {change.action === "Approved" && `${change.app} Approved`}
+                        {change.action === "Deployed" &&
+                          `${change.app} Deployed`}
+                        {change.action === "Feedback sent" &&
+                          `Feedback sent on ${change.app}`}
+                        {change.action === "Approved" &&
+                          `${change.app} Approved`}
                       </p>
                       <p className="text-sm text-slate-400">
-                        {change.action === "Deployed" && `By: ${change.by} | Approved change by: ${change.approved}`}
-                        {change.action === "Feedback sent" && `By: ${change.by} → ${change.to}`}
-                        {change.action === "Approved" && `By: ${change.by} | Changes by: ${change.approved}`}
+                        {change.action === "Deployed" &&
+                          `By: ${change.by} | Approved change by: ${change.approved}`}
+                        {change.action === "Feedback sent" &&
+                          `By: ${change.by} → ${change.to}`}
+                        {change.action === "Approved" &&
+                          `By: ${change.by} | Changes by: ${change.approved}`}
                       </p>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 bg-transparent">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-slate-600 text-slate-300 bg-transparent"
+                    >
                       View Details
                     </Button>
                     {change.action === "Deployed" && (
-                      <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 bg-transparent">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-slate-600 text-slate-300 bg-transparent"
+                      >
                         <RotateCcw className="w-4 h-4 mr-1" />
                         Rollback
                       </Button>
@@ -136,6 +143,6 @@ export default function ChangeHistory() {
           ))}
         </div>
       </main>
-    </>
-  )
+    </RoleLayout>
+  );
 }
