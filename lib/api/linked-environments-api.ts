@@ -49,16 +49,22 @@ export const unlinkEnvironment = (id: string) =>
 // ============================================
 
 /**
- * Sync a PowerApp from a linked environment to LDV-Bridge.
+ * Sync an app from a linked environment to LDV-Bridge.
  * This creates the App record in our database if it doesn't exist,
  * then triggers a sync to fetch the latest metadata.
+ * Routes to the correct connector based on platform.
  */
-export const syncPowerAppToLDVBridge = (externalAppId: string) =>
-  apiClient.post<{
+export const syncAppToLDVBridge = (
+  externalAppId: string,
+  platform: "POWERAPPS" | "MENDIX"
+) => {
+  const connectorPath = platform === "MENDIX" ? "mendix" : "powerapps";
+  return apiClient.post<{
     success: boolean;
     appId: string;
     componentsCount: number;
     changesDetected: number;
     syncedAt: string;
     errors?: string[];
-  }>(`/connectors/powerapps/apps/${externalAppId}/sync`);
+  }>(`/connectors/${connectorPath}/apps/${externalAppId}/sync`);
+};

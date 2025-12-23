@@ -101,7 +101,11 @@ export default function EnvironmentDetailPage() {
   const handleSyncApp = (externalAppId: string, appName: string) => {
     setSyncingAppId(externalAppId);
     syncApp(
-      { externalAppId, appName },
+      {
+        externalAppId,
+        appName,
+        platform: environment?.platform || "POWERAPPS",
+      },
       {
         onSettled: () => {
           setSyncingAppId(null);

@@ -58,8 +58,9 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
   // Sync mutation
   const { mutate: syncApp, isPending: isSyncing } = useMutation({
     mutationFn: async () => {
+      const connectorPath = app.platform === "MENDIX" ? "mendix" : "powerapps";
       const response = await apiClient.post(
-        `/connectors/powerapps/apps/${app.externalId}/sync`
+        `/connectors/${connectorPath}/apps/${app.externalId}/sync`
       );
       return response.data;
     },

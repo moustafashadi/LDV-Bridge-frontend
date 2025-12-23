@@ -16,7 +16,7 @@ import {
   getLinkedEnvironment,
   getLinkedEnvironmentWithApps,
   unlinkEnvironment,
-  syncPowerAppToLDVBridge,
+  syncAppToLDVBridge,
 } from "../api/linked-environments-api";
 import type {
   LinkedEnvironment,
@@ -151,14 +151,14 @@ export function useSyncAppToLDVBridge(): UseMutationResult<
     syncedAt: string;
   },
   Error,
-  { externalAppId: string; appName: string },
+  { externalAppId: string; appName: string; platform: "POWERAPPS" | "MENDIX" },
   unknown
 > {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ externalAppId }) => {
-      const response = await syncPowerAppToLDVBridge(externalAppId);
+    mutationFn: async ({ externalAppId, platform }) => {
+      const response = await syncAppToLDVBridge(externalAppId, platform);
       return response.data;
     },
     onSuccess: (data, variables) => {

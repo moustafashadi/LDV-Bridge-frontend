@@ -2,7 +2,7 @@
 // LINKED ENVIRONMENTS TYPES
 // ============================================
 
-export type LinkedEnvironmentPlatform = "POWERAPPS";
+export type LinkedEnvironmentPlatform = "POWERAPPS" | "MENDIX";
 
 export interface LinkedEnvironment {
   id: string;
