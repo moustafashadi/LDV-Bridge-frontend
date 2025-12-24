@@ -25,6 +25,7 @@ import {
 } from "@/lib/hooks/use-linked-environments";
 import { usePowerAppsApps } from "@/hooks/use-connectors";
 import { CreatePowerAppsDialog } from "@/components/dialogs/create-powerapps-dialog";
+import { ChangeTitleDialog } from "@/components/dialogs/change-title-dialog";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { getMyApps } from "@/lib/api/apps-api";
@@ -37,6 +38,14 @@ export default function EnvironmentDetailPage() {
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [syncingAppId, setSyncingAppId] = useState<string | null>(null);
+
+  // State for change title dialog
+  const [changeTitleDialogOpen, setChangeTitleDialogOpen] = useState(false);
+  const [selectedAppForSync, setSelectedAppForSync] = useState<{
+    externalId: string;
+    name: string;
+  } | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   // Fetch the linked environment
   const {
@@ -98,21 +107,50 @@ export default function EnvironmentDetailPage() {
     }
   };
 
-  const handleSyncApp = (externalAppId: string, appName: string) => {
-    setSyncingAppId(externalAppId);
+  // Opens the change title dialog
+  const handleStartSync = (externalAppId: string, appName: string) => {
+    setSelectedAppForSync({ externalId: externalAppId, name: appName });
+    setSyncError(null);
+    setChangeTitleDialogOpen(true);
+  };
+
+  // Actually performs the sync with the provided title
+  const handleSyncWithTitle = (changeTitle: string) => {
+    if (!selectedAppForSync) return;
+
+    setSyncingAppId(selectedAppForSync.externalId);
+    setSyncError(null);
+
     syncApp(
       {
-        externalAppId,
-        appName,
+        externalAppId: selectedAppForSync.externalId,
+        appName: selectedAppForSync.name,
         platform: environment?.platform || "POWERAPPS",
+        changeTitle,
       },
       {
         onSettled: () => {
           setSyncingAppId(null);
         },
         onSuccess: (data) => {
-          // Navigate to the app detail page after successful sync
+          // Close dialog and navigate to the app detail page
+          setChangeTitleDialogOpen(false);
+          setSelectedAppForSync(null);
           router.push(`/citizen-developer/apps/${data.appId}`);
+        },
+        onError: (error: any) => {
+          // Keep dialog open and show error
+          if (error.response?.status === 409) {
+            setSyncError(
+              "A change with this title already exists. Please choose a different title."
+            );
+          } else {
+            setSyncError(
+              error.response?.data?.message ||
+                error.message ||
+                "Failed to sync. Please try again."
+            );
+          }
         },
       }
     );
@@ -364,7 +402,7 @@ export default function EnvironmentDetailPage() {
                         ) : (
                           <Button
                             className="bg-blue-600 hover:bg-blue-700 w-full"
-                            onClick={() => handleSyncApp(externalId, appName)}
+                            onClick={() => handleStartSync(externalId, appName)}
                             disabled={isSyncing}
                           >
                             {isCurrentlySyncing ? (
@@ -413,6 +451,22 @@ export default function EnvironmentDetailPage() {
             environmentName={environment.name}
           />
         )}
+
+        {/* Change Title Dialog for Sync */}
+        <ChangeTitleDialog
+          open={changeTitleDialogOpen}
+          onOpenChange={(open) => {
+            setChangeTitleDialogOpen(open);
+            if (!open) {
+              setSelectedAppForSync(null);
+              setSyncError(null);
+            }
+          }}
+          appName={selectedAppForSync?.name || ""}
+          onSubmit={handleSyncWithTitle}
+          isLoading={isSyncing}
+          error={syncError}
+        />
       </main>
     </RoleLayout>
   );

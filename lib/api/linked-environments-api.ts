@@ -53,10 +53,12 @@ export const unlinkEnvironment = (id: string) =>
  * This creates the App record in our database if it doesn't exist,
  * then triggers a sync to fetch the latest metadata.
  * Routes to the correct connector based on platform.
+ * @param changeTitle - Optional user-provided title for this change (max 75 chars)
  */
 export const syncAppToLDVBridge = (
   externalAppId: string,
-  platform: "POWERAPPS" | "MENDIX"
+  platform: "POWERAPPS" | "MENDIX",
+  changeTitle?: string
 ) => {
   const connectorPath = platform === "MENDIX" ? "mendix" : "powerapps";
   return apiClient.post<{
@@ -66,5 +68,7 @@ export const syncAppToLDVBridge = (
     changesDetected: number;
     syncedAt: string;
     errors?: string[];
-  }>(`/connectors/${connectorPath}/apps/${externalAppId}/sync`);
+  }>(`/connectors/${connectorPath}/apps/${externalAppId}/sync`, {
+    changeTitle,
+  });
 };

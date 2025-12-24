@@ -2,15 +2,20 @@
 // APPS API CLIENT
 // ============================================
 
-import { apiClient } from './client';
+import { apiClient } from "./client";
 
 // ============================================
 // TYPES & INTERFACES
 // ============================================
 
-export type AppAccessLevel = 'VIEWER' | 'EDITOR' | 'OWNER';
-export type AppStatus = 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'LIVE' | 'ARCHIVED';
-export type PlatformType = 'POWERAPPS' | 'MENDIX';
+export type AppAccessLevel = "VIEWER" | "EDITOR" | "OWNER";
+export type AppStatus =
+  | "DRAFT"
+  | "PENDING_REVIEW"
+  | "APPROVED"
+  | "LIVE"
+  | "ARCHIVED";
+export type PlatformType = "POWERAPPS" | "MENDIX";
 
 export interface App {
   id: string;
@@ -100,8 +105,11 @@ export const getAppAccess = (appId: string) =>
 /**
  * Update app access level for a user
  */
-export const updateAppAccess = (appId: string, userId: string, data: UpdateAppAccessDto) =>
-  apiClient.patch<AppPermission>(`/apps/${appId}/access/${userId}`, data);
+export const updateAppAccess = (
+  appId: string,
+  userId: string,
+  data: UpdateAppAccessDto
+) => apiClient.patch<AppPermission>(`/apps/${appId}/access/${userId}`, data);
 
 /**
  * Revoke app access from a user
@@ -118,14 +126,12 @@ export const getUserApps = (userId: string) =>
 /**
  * Get all apps the current user has access to
  */
-export const getMyApps = () =>
-  apiClient.get<UserAppAccess[]>(`/apps/me/apps`);
+export const getMyApps = () => apiClient.get<UserAppAccess[]>(`/apps/me/apps`);
 
 /**
  * Get all apps in the organization (Admin/Pro Developer only)
  */
-export const getAllApps = () =>
-  apiClient.get<App[]>(`/apps`);
+export const getAllApps = () => apiClient.get<App[]>(`/apps`);
 
 /**
  * Create a new app
@@ -133,12 +139,51 @@ export const getAllApps = () =>
 export const createApp = (data: {
   name: string;
   description?: string;
-  platform: 'POWERAPPS' | 'MENDIX';
+  platform: "POWERAPPS" | "MENDIX";
   externalId?: string;
   connectorId?: string;
   status?: AppStatus;
   version?: string;
   metadata?: Record<string, any>;
-}) =>
-  apiClient.post<App>(`/apps`, data);
+}) => apiClient.post<App>(`/apps`, data);
 
+// ============================================
+// MENDIX APP CREATION
+// ============================================
+
+/**
+ * Request DTO for creating a new Mendix app
+ */
+export interface CreateMendixAppDto {
+  name: string;
+  description?: string;
+  connectorId?: string;
+}
+
+/**
+ * Response from Mendix app creation
+ */
+export interface CreateMendixAppResponse {
+  id: string;
+  name: string;
+  description?: string;
+  projectId: string;
+  appId?: string;
+  appUrl?: string;
+  githubRepoUrl?: string;
+  portalUrl: string;
+  status: "created" | "deployed" | "synced";
+  syncCompleted: boolean;
+  syncMessage?: string;
+  createdAt: string;
+}
+
+/**
+ * Create a new Mendix app with full integration
+ * - Creates Mendix project via Build API
+ * - Deploys app via Deploy API
+ * - Creates GitHub repository (if org has GitHub integration)
+ * - Performs initial sync via Model SDK
+ */
+export const createMendixApp = (data: CreateMendixAppDto) =>
+  apiClient.post<CreateMendixAppResponse>(`/apps/mendix/create`, data);

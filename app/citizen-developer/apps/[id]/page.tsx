@@ -30,6 +30,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { ChangeTitleDialog } from "@/components/dialogs/change-title-dialog";
+import { FeatureSandboxDialog } from "@/components/sandboxes/feature-sandbox-dialog";
+import { SandboxStatusCard } from "@/components/sandboxes/sandbox-status-card";
 
 interface AppDetailPageProps {
   params: Promise<{ id: string }>;
@@ -40,6 +43,12 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
+
+  // State for dialogs
+  const [changeTitleDialogOpen, setChangeTitleDialogOpen] = useState(false);
+  const [featureSandboxDialogOpen, setFeatureSandboxDialogOpen] =
+    useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   // Fetch app details
   const {
@@ -57,23 +66,49 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
 
   // Sync mutation
   const { mutate: syncApp, isPending: isSyncing } = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (changeTitle?: string) => {
       const connectorPath = app.platform === "MENDIX" ? "mendix" : "powerapps";
       const response = await apiClient.post(
-        `/connectors/${connectorPath}/apps/${app.externalId}/sync`
+        `/connectors/${connectorPath}/apps/${app.externalId}/sync`,
+        { changeTitle }
       );
       return response.data;
     },
     onSuccess: () => {
       toast.success("App synced successfully!");
+      setChangeTitleDialogOpen(false);
+      setSyncError(null);
       queryClient.invalidateQueries({ queryKey: ["app", id] });
     },
     onError: (error: any) => {
-      toast.error("Sync failed", {
-        description: error.response?.data?.message || error.message,
-      });
+      // Handle conflict error (duplicate title)
+      if (error.response?.status === 409) {
+        setSyncError(
+          "A change with this title already exists. Please choose a different title."
+        );
+      } else {
+        setSyncError(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to sync. Please try again."
+        );
+        toast.error("Sync failed", {
+          description: error.response?.data?.message || error.message,
+        });
+      }
     },
   });
+
+  // Opens the change title dialog
+  const handleStartSync = () => {
+    setSyncError(null);
+    setChangeTitleDialogOpen(true);
+  };
+
+  // Actually performs the sync with the provided title
+  const handleSyncWithTitle = (changeTitle: string) => {
+    syncApp(changeTitle);
+  };
 
   // Get platform info
   const getPlatformIcon = (platform: string) => {
@@ -165,9 +200,20 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
                 Open in {app.platform === "POWERAPPS" ? "Power Apps" : "Mendix"}
               </Button>
             )}
+            {/* New Feature button for Mendix apps */}
+            {app.platform === "MENDIX" && (
+              <Button
+                variant="outline"
+                className="border-green-600 text-green-400 hover:bg-green-900/20"
+                onClick={() => setFeatureSandboxDialogOpen(true)}
+              >
+                <GitBranch className="w-4 h-4 mr-2" />
+                New Feature
+              </Button>
+            )}
             <Button
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-              onClick={() => syncApp()}
+              onClick={handleStartSync}
               disabled={isSyncing}
             >
               {isSyncing ? (
@@ -293,7 +339,7 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
                 <Button
                   variant="outline"
                   className="border-blue-600 text-blue-400 hover:bg-blue-900/20"
-                  onClick={() => syncApp()}
+                  onClick={handleStartSync}
                   disabled={isSyncing}
                 >
                   {isSyncing ? (
@@ -373,47 +419,31 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
               {app.sandboxes?.length > 0 ? (
                 <div className="space-y-3">
                   {app.sandboxes.map((sandbox: any) => (
-                    <Card
+                    <SandboxStatusCard
                       key={sandbox.id}
-                      className="bg-slate-900/50 border-slate-700"
-                    >
-                      <CardContent className="p-4 flex justify-between items-center">
-                        <div>
-                          <p className="text-white font-medium">
-                            {sandbox.name}
-                          </p>
-                          <p className="text-sm text-slate-400">
-                            Created{" "}
-                            {formatDistanceToNow(new Date(sandbox.createdAt), {
-                              addSuffix: true,
-                            })}
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            router.push(
-                              `/citizen-developer/sandbox/${sandbox.id}`
-                            )
-                          }
-                        >
-                          Open
-                        </Button>
-                      </CardContent>
-                    </Card>
+                      sandbox={sandbox}
+                      appId={id}
+                      onViewDetails={() =>
+                        router.push(`/citizen-developer/sandbox/${sandbox.id}`)
+                      }
+                    />
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8">
                   <GitBranch className="w-12 h-12 text-slate-600 mx-auto mb-3" />
                   <p className="text-slate-400 mb-4">
-                    No sandboxes created for this app yet
+                    No feature sandboxes created for this app yet
                   </p>
-                  <Button className="bg-gradient-to-r from-blue-500 to-purple-600">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Sandbox
-                  </Button>
+                  {app.platform === "MENDIX" && (
+                    <Button
+                      className="bg-gradient-to-r from-blue-500 to-purple-600"
+                      onClick={() => setFeatureSandboxDialogOpen(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Feature Branch
+                    </Button>
+                  )}
                 </div>
               )}
             </TabsContent>
@@ -449,6 +479,30 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
           </Tabs>
         </Card>
       </main>
+
+      {/* Change Title Dialog for Sync */}
+      <ChangeTitleDialog
+        open={changeTitleDialogOpen}
+        onOpenChange={(open) => {
+          setChangeTitleDialogOpen(open);
+          if (!open) {
+            setSyncError(null);
+          }
+        }}
+        appName={app?.name || ""}
+        onSubmit={handleSyncWithTitle}
+        isLoading={isSyncing}
+        error={syncError}
+      />
+
+      {/* Feature Sandbox Dialog */}
+      <FeatureSandboxDialog
+        open={featureSandboxDialogOpen}
+        onOpenChange={setFeatureSandboxDialogOpen}
+        appId={id}
+        appName={app?.name || ""}
+        onSuccess={() => refetch()}
+      />
     </RoleLayout>
   );
 }

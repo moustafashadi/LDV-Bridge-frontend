@@ -9,11 +9,20 @@ export enum SandboxPlatform {
 }
 
 export enum SandboxStatus {
+  // Provisioning states
   PROVISIONING = "PROVISIONING",
   ACTIVE = "ACTIVE",
   STOPPED = "STOPPED",
   EXPIRED = "EXPIRED",
   ERROR = "ERROR",
+  // Workflow states (new)
+  PENDING_REVIEW = "PENDING_REVIEW",
+  IN_REVIEW = "IN_REVIEW",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  MERGED = "MERGED",
+  CHANGES_REQUESTED = "CHANGES_REQUESTED",
+  ABANDONED = "ABANDONED",
 }
 
 export enum SandboxType {
@@ -26,6 +35,20 @@ export enum ProvisioningStatus {
   PENDING = "PENDING",
   IN_PROGRESS = "IN_PROGRESS",
   COMPLETED = "COMPLETED",
+  FAILED = "FAILED",
+}
+
+export enum ConflictStatus {
+  NONE = "NONE",
+  POTENTIAL = "POTENTIAL",
+  NEEDS_RESOLUTION = "NEEDS_RESOLUTION",
+  RESOLVED = "RESOLVED",
+}
+
+export enum PipelineStatus {
+  PENDING = "PENDING",
+  RUNNING = "RUNNING",
+  PASSED = "PASSED",
   FAILED = "FAILED",
 }
 
@@ -45,15 +68,42 @@ export interface Sandbox {
   environmentId?: string;
   environmentUrl?: string;
   region?: string;
-  appId?: string; // Linked application ID
+  appId?: string;
+  // Branch info (new)
+  mendixBranch?: string;
+  baseMendixRevision?: string;
+  latestMendixRevision?: string;
+  githubBranch?: string;
+  baseGithubSha?: string;
+  latestGithubSha?: string;
+  // Conflict info (new)
+  conflictStatus?: ConflictStatus;
+  conflictingFiles?: string[];
+  // Submission info (new)
+  submittedAt?: string;
+  reviewedAt?: string;
+  mergedAt?: string;
   metadata?: {
-    linkedExisting?: boolean; // True if this is a linked environment (not created by us)
+    linkedExisting?: boolean;
     originalEnvironmentName?: string;
+    lastSubmission?: {
+      commitSha?: string;
+      commitUrl?: string;
+      changesDetected?: number;
+      submittedAt?: string;
+    };
+    studioUrl?: string; // Mendix Portal URL to open branch in Studio Pro
     [key: string]: any;
   };
   expiresAt?: string;
   createdAt: string;
   updatedAt: string;
+  // Related data
+  createdBy?: {
+    id: string;
+    email: string;
+    name?: string;
+  };
 }
 
 /**
@@ -66,7 +116,16 @@ export interface CreateSandboxRequest {
   type: SandboxType;
   expiresAt?: string;
   region?: string;
-  sourceAppId?: string; // For cloning existing apps
+  sourceAppId?: string;
+}
+
+/**
+ * Create feature sandbox request (new workflow)
+ */
+export interface CreateFeatureSandboxRequest {
+  appId: string;
+  featureName: string;
+  description?: string;
 }
 
 /**
@@ -76,7 +135,7 @@ export interface LinkExistingEnvironmentRequest {
   name: string;
   description?: string;
   platform: SandboxPlatform;
-  environmentId: string; // The external environment ID from PowerApps/Mendix
+  environmentId: string;
   type: SandboxType;
   expiresAt?: string;
 }
@@ -88,6 +147,28 @@ export interface UpdateSandboxRequest {
   name?: string;
   description?: string;
   expiresAt?: string;
+}
+
+/**
+ * Sandbox sync result
+ */
+export interface SandboxSyncResult {
+  success: boolean;
+  message: string;
+  commitSha?: string;
+  commitUrl?: string;
+  changesDetected: number;
+  pipelineTriggered: boolean;
+}
+
+/**
+ * Conflict check result
+ */
+export interface SandboxConflictCheck {
+  hasConflicts: boolean;
+  conflictStatus: ConflictStatus;
+  conflictingFiles: string[];
+  message: string;
 }
 
 /**

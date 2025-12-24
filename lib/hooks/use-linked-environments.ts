@@ -151,14 +151,23 @@ export function useSyncAppToLDVBridge(): UseMutationResult<
     syncedAt: string;
   },
   Error,
-  { externalAppId: string; appName: string; platform: "POWERAPPS" | "MENDIX" },
+  {
+    externalAppId: string;
+    appName: string;
+    platform: "POWERAPPS" | "MENDIX";
+    changeTitle?: string;
+  },
   unknown
 > {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ externalAppId, platform }) => {
-      const response = await syncAppToLDVBridge(externalAppId, platform);
+    mutationFn: async ({ externalAppId, platform, changeTitle }) => {
+      const response = await syncAppToLDVBridge(
+        externalAppId,
+        platform,
+        changeTitle
+      );
       return response.data;
     },
     onSuccess: (data, variables) => {
@@ -169,9 +178,18 @@ export function useSyncAppToLDVBridge(): UseMutationResult<
       });
     },
     onError: (error: any, variables) => {
-      toast.error(`Failed to sync ${variables.appName}`, {
-        description: error.response?.data?.message || error.message,
-      });
+      // Handle conflict error (duplicate title) differently
+      if (error.response?.status === 409) {
+        toast.error(`Title already exists`, {
+          description:
+            error.response?.data?.message ||
+            "Please choose a different title for your changes.",
+        });
+      } else {
+        toast.error(`Failed to sync ${variables.appName}`, {
+          description: error.response?.data?.message || error.message,
+        });
+      }
     },
   });
 }
