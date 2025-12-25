@@ -141,9 +141,12 @@ export const sandboxesApi = {
     id: string,
     changeTitle?: string
   ): Promise<SandboxSyncResult> {
+    // Use a much longer timeout for sync operations (10 minutes)
+    // as cloning and uploading to GitHub can take several minutes
     const response = await apiClient.post<SandboxSyncResult>(
       `${SANDBOXES_BASE}/${id}/sync`,
-      { changeTitle }
+      { changeTitle },
+      { timeout: 600000 } // 10 minutes
     );
     return response.data;
   },

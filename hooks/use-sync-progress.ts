@@ -116,10 +116,12 @@ export function useSyncProgress({
       }
     };
 
-    eventSource.onerror = (error) => {
-      console.error("[SSE] Connection error:", error);
+    eventSource.onerror = () => {
+      // SSE errors are expected when:
+      // 1. The sync completes and the backend closes the stream
+      // 2. Network interruption
+      // We don't log this as an error since it's normal behavior
       setIsConnected(false);
-      // Don't set error status here - connection errors are normal when the sync completes
     };
 
     return () => {
