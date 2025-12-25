@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +46,7 @@ import type {
   ConflictStatus,
 } from "@/lib/types/sandboxes";
 import { ChangeTitleDialog } from "@/components/dialogs/change-title-dialog";
+import { useSyncProgress } from "@/hooks/use-sync-progress";
 
 interface SandboxStatusCardProps {
   sandbox: Sandbox;
@@ -119,14 +120,39 @@ export function SandboxStatusCard({
   const [showAbandonDialog, setShowAbandonDialog] = useState(false);
   const [showSyncDialog, setShowSyncDialog] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncStarted, setSyncStarted] = useState(false);
 
   const status = statusConfig[sandbox.status] || statusConfig.ACTIVE;
   const hasConflicts = sandbox.conflictStatus === "NEEDS_RESOLUTION";
+
+  // Sync progress via SSE
+  const syncProgress = useSyncProgress({
+    sandboxId: sandbox.id,
+    enabled: syncStarted && showSyncDialog,
+    onComplete: () => {
+      // Progress completed - the mutation's onSuccess will handle the rest
+    },
+    onError: (event) => {
+      setSyncError(event.details || event.message);
+    },
+  });
+
+  // Reset sync state when dialog closes
+  useEffect(() => {
+    if (!showSyncDialog) {
+      setSyncStarted(false);
+      syncProgress.reset();
+    }
+  }, [showSyncDialog]);
 
   // Sync mutation
   const { mutate: syncSandbox, isPending: isSyncing } = useMutation({
     mutationFn: (changeTitle: string) =>
       sandboxesApi.syncSandbox(sandbox.id, changeTitle),
+    onMutate: () => {
+      // Start listening for progress events when sync begins
+      setSyncStarted(true);
+    },
     onSuccess: (result) => {
       toast.success("Sync complete!", {
         description: `${result.changesDetected} changes detected. ${
@@ -135,9 +161,11 @@ export function SandboxStatusCard({
       });
       setShowSyncDialog(false);
       setSyncError(null);
+      setSyncStarted(false);
       queryClient.invalidateQueries({ queryKey: ["app", appId] });
     },
     onError: (error: any) => {
+      setSyncStarted(false);
       if (error.response?.status === 409) {
         setSyncError(
           "A change with this title already exists. Please choose a different title."
@@ -339,12 +367,27 @@ export function SandboxStatusCard({
         open={showSyncDialog}
         onOpenChange={(open) => {
           setShowSyncDialog(open);
-          if (!open) setSyncError(null);
+          if (!open) {
+            setSyncError(null);
+            setSyncStarted(false);
+          }
         }}
         appName={sandbox.name}
         onSubmit={(title) => syncSandbox(title)}
         isLoading={isSyncing}
         error={syncError}
+        sandboxId={sandbox.id}
+        syncProgress={
+          syncStarted
+            ? {
+                step: syncProgress.currentStep,
+                totalSteps: syncProgress.totalSteps,
+                status: syncProgress.status,
+                message: syncProgress.message,
+                details: syncProgress.details,
+              }
+            : undefined
+        }
       />
 
       {/* Abandon Confirmation */}
