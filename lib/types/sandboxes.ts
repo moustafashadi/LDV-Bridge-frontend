@@ -222,3 +222,109 @@ export interface QuotaCheckResponse {
   maxAllowed: number;
   reason?: string;
 }
+
+/**
+ * Submitter statistics for review sidebar
+ */
+export interface SubmitterStats {
+  totalSubmissions: number;
+  approvedCount: number;
+  rejectedCount: number;
+  approvalRate: number;
+}
+
+/**
+ * Review details for Pro Developer review page
+ * Returned by GET /sandboxes/:id/review-details
+ */
+export interface SandboxReviewDetails {
+  sandbox: {
+    id: string;
+    name: string;
+    description: string | null;
+    status: SandboxStatus;
+    conflictStatus: ConflictStatus | null;
+    mendixBranch: string | null;
+    githubBranch: string | null;
+    submittedAt: string | null;
+    createdAt: string;
+    createdBy: {
+      id: string;
+      email: string;
+      name: string | null;
+      role: string;
+    };
+  };
+  app: {
+    id: string;
+    name: string;
+    platform: string;
+    externalId: string;
+    githubRepoUrl: string | null;
+  } | null;
+  change: {
+    id: string;
+    title: string;
+    description: string | null;
+    changeType: string;
+    status: string;
+    riskScore: number | null;
+    riskAssessment: any;
+    diffSummary: {
+      totalChanges?: number;
+      additions?: number;
+      deletions?: number;
+      modifications?: number;
+    } | null;
+    beforeMetadata: any;
+    afterMetadata: any;
+    pipelineStatus: string | null;
+    pipelineUrl: string | null;
+    pipelineResults: any;
+    createdAt: string;
+  } | null;
+  review: {
+    id: string;
+    status: string;
+    decision: string | null;
+    feedback: string | null;
+    reviewerId: string;
+    reviewer: {
+      id: string;
+      name: string | null;
+      email: string;
+    };
+    isAssignedToMe: boolean;
+    startedAt: string | null;
+    completedAt: string | null;
+    createdAt: string;
+  } | null;
+  comments: Array<{
+    id: string;
+    content: string;
+    userId: string;
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+      role: string;
+    };
+    parentId: string | null;
+    isResolved: boolean;
+    mentions: string[];
+    createdAt: string;
+    updatedAt: string;
+    replies?: Array<{
+      id: string;
+      content: string;
+      userId: string;
+      user: {
+        id: string;
+        name: string | null;
+        email: string;
+      };
+      createdAt: string;
+    }>;
+  }>;
+  submitterStats: SubmitterStats;
+}

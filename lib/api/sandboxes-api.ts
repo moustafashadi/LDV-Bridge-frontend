@@ -12,7 +12,9 @@ import type {
   CreateFeatureSandboxRequest,
   SandboxSyncResult,
   SandboxConflictCheck,
+  SandboxReviewDetails,
 } from "../types/sandboxes";
+import type { ReviewQueueResponse } from "../types/reviews";
 
 const SANDBOXES_BASE = "/sandboxes";
 
@@ -99,12 +101,43 @@ export const sandboxesApi = {
   },
 
   /**
+   * Get review queue for Pro Developers
+   * Returns sandboxes pending review with metrics and SLA info
+   * @param page Page number (1-indexed)
+   * @param limit Number of items per page
+   * @returns Review queue items with metrics
+   */
+  async getReviewQueue(
+    page?: number,
+    limit?: number
+  ): Promise<ReviewQueueResponse> {
+    const response = await apiClient.get<ReviewQueueResponse>(
+      `${SANDBOXES_BASE}/review-queue`,
+      { params: { page, limit } }
+    );
+    return response.data;
+  },
+
+  /**
    * Get sandbox by ID
    * @param id Sandbox ID
    * @returns Sandbox details
    */
   async getById(id: string): Promise<Sandbox> {
     const response = await apiClient.get<Sandbox>(`${SANDBOXES_BASE}/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Get comprehensive review details for Pro Developer review page
+   * Returns sandbox, change, review, comments, and submitter stats
+   * @param sandboxId Sandbox ID
+   * @returns Review details including all related data
+   */
+  async getReviewDetails(sandboxId: string): Promise<SandboxReviewDetails> {
+    const response = await apiClient.get<SandboxReviewDetails>(
+      `${SANDBOXES_BASE}/${sandboxId}/review-details`
+    );
     return response.data;
   },
 
@@ -159,7 +192,7 @@ export const sandboxesApi = {
    */
   async submitForReview(id: string): Promise<Sandbox> {
     const response = await apiClient.post<Sandbox>(
-      `${SANDBOXES_BASE}/${id}/submit`
+      `${SANDBOXES_BASE}/${id}/submit-for-review`
     );
     return response.data;
   },

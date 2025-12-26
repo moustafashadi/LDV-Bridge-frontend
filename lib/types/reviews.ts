@@ -155,6 +155,99 @@ export interface ReviewWithComments extends Review {
   commentCount: number;
 }
 
+// ============================================
+// REVIEW QUEUE TYPES (Pro Developer Queue)
+// ============================================
+
+export interface ReviewQueueSandbox {
+  id: string;
+  name: string;
+  status: string;
+  submittedAt: string;
+  mendixBranch?: string;
+  githubBranch?: string;
+  createdBy: {
+    id: string;
+    name: string;
+    email: string;
+    role?: string;
+  };
+}
+
+export interface ReviewQueueApp {
+  id: string;
+  name: string;
+  platform: 'MENDIX' | 'POWERAPPS';
+  externalId?: string;
+}
+
+export interface ReviewQueueChange {
+  id: string;
+  title: string;
+  changeType: string;
+  riskScore?: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  diffSummary?: {
+    added: number;
+    modified: number;
+    deleted: number;
+    totalChanges: number;
+    categories?: {
+      pages: number;
+      microflows: number;
+      nanoflows: number;
+      domainModels: number;
+      integrations: number;
+      resources: number;
+      other: number;
+    };
+  };
+  createdAt: string;
+}
+
+export interface ReviewQueueReview {
+  id: string;
+  status: ReviewStatus;
+  reviewerId: string;
+  reviewer: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  isAssignedToMe: boolean;
+  createdAt: string;
+  startedAt?: string;
+}
+
+export interface ReviewQueueSLA {
+  isOverdue: boolean;
+  hoursWaiting: number;
+  threshold: number;
+  expectedBy: string;
+}
+
+export interface ReviewQueueItem {
+  sandbox: ReviewQueueSandbox;
+  app: ReviewQueueApp | null;
+  change: ReviewQueueChange | null;
+  review: ReviewQueueReview | null;
+  sla: ReviewQueueSLA;
+}
+
+export interface ReviewQueueMetrics {
+  pending: number;
+  inProgress: number;
+  overdue: number;
+  approved: number;
+  rejected: number;
+}
+
+export interface ReviewQueueResponse {
+  data: ReviewQueueItem[];
+  total: number;
+  metrics: ReviewQueueMetrics;
+}
+
 // Helper functions
 export function getReviewStatusColor(status: ReviewStatus): string {
   switch (status) {
