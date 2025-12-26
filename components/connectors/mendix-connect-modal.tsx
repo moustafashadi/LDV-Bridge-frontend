@@ -31,14 +31,43 @@ export function MendixConnectModal({
   const [pat, setPat] = useState("");
   const [username, setUsername] = useState("");
   const [showInstructions, setShowInstructions] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { mutate: connect, isPending } = useConnectMendix();
   const { data: instructions } = useMendixInstructions();
 
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Username validation
+    if (!username.trim()) {
+      newErrors.username = "Username is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username.trim())) {
+      newErrors.username = "Please enter a valid email address";
+    }
+
+    // API Key validation
+    if (!apiKey.trim()) {
+      newErrors.apiKey = "API Key is required";
+    } else if (apiKey.trim().length < 10) {
+      newErrors.apiKey = "API Key appears too short";
+    }
+
+    // PAT validation
+    if (!pat.trim()) {
+      newErrors.pat = "Personal Access Token is required";
+    } else if (pat.trim().length < 5) {
+      newErrors.pat = "PAT appears too short";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!apiKey.trim() || !pat.trim() || !username.trim()) {
+    if (!validate()) {
       return;
     }
 
@@ -54,6 +83,7 @@ export function MendixConnectModal({
           setApiKey("");
           setPat("");
           setUsername("");
+          setErrors({});
           setShowInstructions(false);
           onOpenChange(false);
         },
@@ -65,6 +95,7 @@ export function MendixConnectModal({
     setApiKey("");
     setPat("");
     setUsername("");
+    setErrors({});
     setShowInstructions(false);
     onOpenChange(false);
   };
@@ -147,14 +178,22 @@ export function MendixConnectModal({
               type="text"
               placeholder="your.email@example.com"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
+              onChange={(e) => {
+                setUsername(e.target.value);
+                if (errors.username)
+                  setErrors((prev) => ({ ...prev, username: "" }));
+              }}
+              className={errors.username ? "border-red-500" : ""}
               disabled={isPending}
               autoComplete="email"
             />
-            <p className="text-xs text-muted-foreground">
-              The email address associated with your Mendix account
-            </p>
+            {errors.username ? (
+              <p className="text-xs text-red-500">{errors.username}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                The email address associated with your Mendix account
+              </p>
+            )}
           </div>
 
           {/* API Key Field */}
@@ -167,15 +206,23 @@ export function MendixConnectModal({
               type="password"
               placeholder="150fd9d2-66e6-49fc-95e7-627af619979d"
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              required
+              onChange={(e) => {
+                setApiKey(e.target.value);
+                if (errors.apiKey)
+                  setErrors((prev) => ({ ...prev, apiKey: "" }));
+              }}
+              className={errors.apiKey ? "border-red-500" : ""}
               disabled={isPending}
               autoComplete="off"
             />
-            <p className="text-xs text-muted-foreground">
-              Used to validate your connection and for general API access
-              (listing projects, environments)
-            </p>
+            {errors.apiKey ? (
+              <p className="text-xs text-red-500">{errors.apiKey}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Used to validate your connection and for general API access
+                (listing projects, environments)
+              </p>
+            )}
           </div>
 
           {/* PAT Field */}
@@ -189,15 +236,22 @@ export function MendixConnectModal({
               type="password"
               placeholder="7LJE...vk"
               value={pat}
-              onChange={(e) => setPat(e.target.value)}
-              required
+              onChange={(e) => {
+                setPat(e.target.value);
+                if (errors.pat) setErrors((prev) => ({ ...prev, pat: "" }));
+              }}
+              className={errors.pat ? "border-red-500" : ""}
               disabled={isPending}
               autoComplete="off"
             />
-            <p className="text-xs text-muted-foreground">
-              Stored securely for creating and managing apps. Not validated
-              during connection.
-            </p>
+            {errors.pat ? (
+              <p className="text-xs text-red-500">{errors.pat}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Stored securely for creating and managing apps. Not validated
+                during connection.
+              </p>
+            )}
           </div>
 
           {/* Security Notice */}

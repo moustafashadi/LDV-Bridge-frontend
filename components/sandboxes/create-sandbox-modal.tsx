@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -30,11 +31,33 @@ import {
   ExternalLink,
   CheckCircle2,
   Plus,
+  XCircle,
+  GitBranch,
+  Upload,
+  FileCheck,
+  Cloud,
+  Database,
+  Settings,
 } from "lucide-react";
 import { useCreateMendixApp } from "@/lib/hooks/use-app-access";
 import { usePowerAppsEnvironments } from "@/hooks/use-connectors";
 import { useLinkEnvironment } from "@/lib/hooks/use-linked-environments";
+import { useAppCreationProgress } from "@/hooks/use-app-creation-progress";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+// Step icons for app creation progress
+const STEP_ICONS: Record<number, React.ReactNode> = {
+  1: <Settings className="w-4 h-4" />,
+  2: <Cloud className="w-4 h-4" />,
+  3: <Cloud className="w-4 h-4" />,
+  4: <Database className="w-4 h-4" />,
+  5: <GitBranch className="w-4 h-4" />,
+  6: <Loader2 className="w-4 h-4" />,
+  7: <Upload className="w-4 h-4" />,
+  8: <FileCheck className="w-4 h-4" />,
+  9: <CheckCircle2 className="w-4 h-4" />,
+};
 
 interface CreateSandboxModalProps {
   open: boolean;
@@ -74,6 +97,31 @@ export function CreateSandboxModal({
     description: "",
   });
 
+  // Temporary ID for progress tracking (generated when starting creation)
+  const [tempId, setTempId] = useState<string | null>(null);
+
+  // Subscribe to app creation progress
+  const appCreationProgress = useAppCreationProgress({
+    tempId: tempId || "",
+    enabled: !!tempId && isMendixCreating,
+    onComplete: () => {
+      toast.success("Mendix app created successfully!");
+    },
+    onError: (event) => {
+      toast.error("App creation failed", {
+        description: event.details || event.message,
+      });
+    },
+  });
+
+  // Reset tempId when modal closes
+  useEffect(() => {
+    if (!open) {
+      setTempId(null);
+      appCreationProgress.reset();
+    }
+  }, [open]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
@@ -111,9 +159,16 @@ export function CreateSandboxModal({
 
     // Handle Create App tab (Mendix only)
     if (activeTab === "create-app") {
+      // Generate a temp ID for progress tracking
+      const newTempId = `temp-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+      setTempId(newTempId);
+
       createMendixApp({
         name: mendixAppForm.name.trim(),
         description: mendixAppForm.description.trim() || undefined,
+        tempId: newTempId,
       });
       return;
     }
@@ -339,6 +394,8 @@ export function CreateSandboxModal({
                       onClick={() => {
                         resetMendixApp();
                         setMendixAppForm({ name: "", description: "" });
+                        setTempId(null);
+                        appCreationProgress.reset();
                       }}
                     >
                       Create Another
@@ -349,6 +406,8 @@ export function CreateSandboxModal({
                       onClick={() => {
                         resetMendixApp();
                         setMendixAppForm({ name: "", description: "" });
+                        setTempId(null);
+                        appCreationProgress.reset();
                         onOpenChange(false);
                         onSuccess?.();
                       }}
@@ -356,6 +415,149 @@ export function CreateSandboxModal({
                       Done
                     </Button>
                   </div>
+                </div>
+              ) : isMendixCreating ? (
+                // Progress state - show during creation
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-blue-400">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="font-medium">Creating Mendix App...</span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-400">Progress</span>
+                      <span
+                        className={cn(
+                          "font-medium",
+                          appCreationProgress.status === "completed"
+                            ? "text-green-400"
+                            : appCreationProgress.status === "error"
+                            ? "text-red-400"
+                            : "text-blue-400"
+                        )}
+                      >
+                        {appCreationProgress.progress}%
+                      </span>
+                    </div>
+                    <Progress
+                      value={appCreationProgress.progress}
+                      className={cn(
+                        "h-2",
+                        appCreationProgress.status === "completed" &&
+                          "[&>div]:bg-green-500",
+                        appCreationProgress.status === "error" &&
+                          "[&>div]:bg-red-500"
+                      )}
+                    />
+                  </div>
+
+                  {/* Current step indicator */}
+                  <div
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border",
+                      appCreationProgress.status === "completed"
+                        ? "bg-green-900/20 border-green-800"
+                        : appCreationProgress.status === "error"
+                        ? "bg-red-900/20 border-red-800"
+                        : "bg-slate-800/50 border-slate-700"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "shrink-0",
+                        appCreationProgress.status === "completed"
+                          ? "text-green-400"
+                          : appCreationProgress.status === "error"
+                          ? "text-red-400"
+                          : "text-blue-400 animate-pulse"
+                      )}
+                    >
+                      {appCreationProgress.status === "completed" ? (
+                        <CheckCircle2 className="w-5 h-5" />
+                      ) : appCreationProgress.status === "error" ? (
+                        <XCircle className="w-5 h-5" />
+                      ) : (
+                        STEP_ICONS[appCreationProgress.currentStep] || (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        )
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={cn(
+                          "font-medium truncate",
+                          appCreationProgress.status === "completed"
+                            ? "text-green-300"
+                            : appCreationProgress.status === "error"
+                            ? "text-red-300"
+                            : "text-white"
+                        )}
+                      >
+                        {appCreationProgress.message || "Preparing..."}
+                      </p>
+                      {appCreationProgress.details && (
+                        <p className="text-xs text-slate-400 truncate mt-0.5">
+                          {appCreationProgress.details}
+                        </p>
+                      )}
+                    </div>
+                    <div className="shrink-0 text-xs text-slate-500">
+                      Step {appCreationProgress.currentStep} of{" "}
+                      {appCreationProgress.totalSteps}
+                    </div>
+                  </div>
+
+                  {/* Step list preview */}
+                  <div className="grid grid-cols-9 gap-1">
+                    {Array.from({ length: appCreationProgress.totalSteps }).map(
+                      (_, i) => {
+                        const stepNum = i + 1;
+                        const isCurrentStep =
+                          stepNum === appCreationProgress.currentStep;
+                        const isPastStep =
+                          stepNum < (appCreationProgress.currentStep || 0);
+                        const isFutureStep =
+                          stepNum > (appCreationProgress.currentStep || 0);
+
+                        return (
+                          <div
+                            key={stepNum}
+                            className={cn(
+                              "h-1.5 rounded-full transition-colors",
+                              isPastStep && "bg-green-500",
+                              isCurrentStep &&
+                                (appCreationProgress.status === "error"
+                                  ? "bg-red-500"
+                                  : "bg-blue-500"),
+                              isFutureStep && "bg-slate-700"
+                            )}
+                          />
+                        );
+                      }
+                    )}
+                  </div>
+
+                  {/* Error display */}
+                  {appCreationProgress.status === "error" &&
+                    appCreationProgress.details && (
+                      <div className="flex items-start gap-2 p-3 bg-red-900/30 border border-red-800 rounded-md">
+                        <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+                        <p className="text-sm text-red-300">
+                          {appCreationProgress.details}
+                        </p>
+                      </div>
+                    )}
+
+                  {/* Note about long operation */}
+                  <Alert className="bg-amber-500/10 border-amber-500/50">
+                    <Info className="h-4 w-4 text-amber-400" />
+                    <AlertDescription className="text-amber-200 text-sm">
+                      This may take a few minutes. Please do not close this
+                      window.
+                    </AlertDescription>
+                  </Alert>
                 </div>
               ) : (
                 // Form state
@@ -519,7 +721,8 @@ export function CreateSandboxModal({
                   <Alert className="bg-amber-500/10 border-amber-500/50">
                     <AlertCircle className="h-4 w-4 text-amber-500" />
                     <AlertDescription className="text-amber-200 text-sm">
-                      No PowerApps environments found. Make sure you're connected to PowerApps.
+                      No PowerApps environments found. Make sure you're
+                      connected to PowerApps.
                     </AlertDescription>
                   </Alert>
                 )}

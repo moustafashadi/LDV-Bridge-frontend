@@ -158,6 +158,7 @@ export interface CreateMendixAppDto {
   name: string;
   description?: string;
   connectorId?: string;
+  tempId?: string; // Temporary ID for progress tracking
 }
 
 /**
