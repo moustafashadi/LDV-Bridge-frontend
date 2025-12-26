@@ -19,6 +19,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sandboxesApi } from "@/lib/api/sandboxes-api";
 import { toast } from "sonner";
 
+// Validation constants matching backend CreateFeatureSandboxDto
+const FEATURE_NAME_MIN_LENGTH = 3;
+const FEATURE_NAME_MAX_LENGTH = 50;
+const FEATURE_NAME_PATTERN = /^[a-zA-Z0-9\s\-_]+$/;
+const DESCRIPTION_MAX_LENGTH = 500;
+
 interface FeatureSandboxDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,7 +43,10 @@ export function FeatureSandboxDialog({
   const queryClient = useQueryClient();
   const [featureName, setFeatureName] = useState("");
   const [description, setDescription] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{
+    featureName?: string;
+    description?: string;
+  }>({});
 
   // Generate branch name preview
   const branchName = featureName
@@ -47,12 +56,38 @@ export function FeatureSandboxDialog({
         .replace(/[^a-z0-9-]/g, "")}`
     : "";
 
+  // Validate form fields
+  const validateForm = (): boolean => {
+    const newErrors: { featureName?: string; description?: string } = {};
+
+    // Feature name validation
+    const trimmedName = featureName.trim();
+    if (!trimmedName) {
+      newErrors.featureName = "Feature name is required";
+    } else if (trimmedName.length < FEATURE_NAME_MIN_LENGTH) {
+      newErrors.featureName = `Feature name must be at least ${FEATURE_NAME_MIN_LENGTH} characters`;
+    } else if (trimmedName.length > FEATURE_NAME_MAX_LENGTH) {
+      newErrors.featureName = `Feature name must be at most ${FEATURE_NAME_MAX_LENGTH} characters`;
+    } else if (!FEATURE_NAME_PATTERN.test(trimmedName)) {
+      newErrors.featureName =
+        "Feature name can only contain letters, numbers, spaces, hyphens, and underscores";
+    }
+
+    // Description validation
+    if (description && description.length > DESCRIPTION_MAX_LENGTH) {
+      newErrors.description = `Description must be at most ${DESCRIPTION_MAX_LENGTH} characters`;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const { mutate: createSandbox, isPending } = useMutation({
     mutationFn: () =>
       sandboxesApi.createFeatureSandbox({
         appId,
-        featureName,
-        description: description || undefined,
+        featureName: featureName.trim(),
+        description: description.trim() || undefined,
       }),
     onSuccess: (sandbox) => {
       // Get the studio URL from sandbox environment metadata
@@ -80,37 +115,56 @@ export function FeatureSandboxDialog({
       }
     },
     onError: (error: any) => {
-      setError(
+      const errorMessage =
         error.response?.data?.message ||
-          error.message ||
-          "Failed to create feature sandbox"
-      );
+        error.message ||
+        "Failed to create feature sandbox";
+      // Check if it's a validation error from the backend
+      if (Array.isArray(errorMessage)) {
+        setErrors({ featureName: errorMessage.join(", ") });
+      } else {
+        setErrors({ featureName: errorMessage });
+      }
     },
   });
 
   const handleClose = () => {
     setFeatureName("");
     setDescription("");
-    setError(null);
+    setErrors({});
     onOpenChange(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
-    if (!featureName.trim()) {
-      setError("Feature name is required");
-      return;
-    }
-
-    if (featureName.length < 3) {
-      setError("Feature name must be at least 3 characters");
+    if (!validateForm()) {
       return;
     }
 
     createSandbox();
   };
+
+  // Real-time validation feedback
+  const handleFeatureNameChange = (value: string) => {
+    setFeatureName(value);
+    // Clear error when user starts typing
+    if (errors.featureName) {
+      setErrors((prev) => ({ ...prev, featureName: undefined }));
+    }
+  };
+
+  const handleDescriptionChange = (value: string) => {
+    setDescription(value);
+    // Clear error when user starts typing
+    if (errors.description) {
+      setErrors((prev) => ({ ...prev, description: undefined }));
+    }
+  };
+
+  // Calculate remaining characters
+  const featureNameRemaining = FEATURE_NAME_MAX_LENGTH - featureName.length;
+  const descriptionRemaining = DESCRIPTION_MAX_LENGTH - description.length;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -127,19 +181,16 @@ export function FeatureSandboxDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert className="bg-red-500/10 border-red-500/50">
-              <AlertDescription className="text-red-200">
-                {error}
-              </AlertDescription>
-            </Alert>
-          )}
-
           {/* Info Alert */}
           <Alert className="bg-blue-500/10 border-blue-500/50 [&>svg]:text-blue-400">
             <Info className="h-4 w-4" />
             <AlertDescription className="text-blue-200 text-sm [&>p]:leading-relaxed">
-              <p>This will create a branch in both <strong>Mendix Team Server</strong> and <strong>GitHub</strong>. Work in Mendix, then use <strong>Sync</strong> to push your changes to GitHub.</p>
+              <p>
+                This will create a branch in both{" "}
+                <strong>Mendix Team Server</strong> and <strong>GitHub</strong>.
+                Work in Mendix, then use <strong>Sync</strong> to push your
+                changes to GitHub.
+              </p>
             </AlertDescription>
           </Alert>
 
@@ -152,10 +203,31 @@ export function FeatureSandboxDialog({
               id="featureName"
               placeholder="e.g., User Dashboard, Payment Integration"
               value={featureName}
-              onChange={(e) => setFeatureName(e.target.value)}
-              className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+              onChange={(e) => handleFeatureNameChange(e.target.value)}
+              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 ${
+                errors.featureName ? "border-red-500 focus:border-red-500" : ""
+              }`}
+              maxLength={FEATURE_NAME_MAX_LENGTH}
               autoFocus
             />
+            <div className="flex justify-between items-center">
+              {errors.featureName ? (
+                <p className="text-sm text-red-400">{errors.featureName}</p>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  Letters, numbers, spaces, hyphens, and underscores only
+                </p>
+              )}
+              <span
+                className={`text-xs ${
+                  featureNameRemaining < 10
+                    ? "text-amber-400"
+                    : "text-slate-500"
+                }`}
+              >
+                {featureNameRemaining} chars left
+              </span>
+            </div>
           </div>
 
           {/* Branch Preview */}
@@ -186,9 +258,28 @@ export function FeatureSandboxDialog({
               id="description"
               placeholder="Describe what this feature will do..."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 min-h-20"
+              onChange={(e) => handleDescriptionChange(e.target.value)}
+              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 min-h-20 ${
+                errors.description ? "border-red-500 focus:border-red-500" : ""
+              }`}
+              maxLength={DESCRIPTION_MAX_LENGTH}
             />
+            <div className="flex justify-between items-center">
+              {errors.description ? (
+                <p className="text-sm text-red-400">{errors.description}</p>
+              ) : (
+                <span />
+              )}
+              <span
+                className={`text-xs ${
+                  descriptionRemaining < 50
+                    ? "text-amber-400"
+                    : "text-slate-500"
+                }`}
+              >
+                {descriptionRemaining} chars left
+              </span>
+            </div>
           </div>
 
           <DialogFooter className="gap-3">
@@ -202,7 +293,11 @@ export function FeatureSandboxDialog({
             </Button>
             <Button
               type="submit"
-              disabled={isPending || !featureName.trim()}
+              disabled={
+                isPending ||
+                !featureName.trim() ||
+                featureName.trim().length < FEATURE_NAME_MIN_LENGTH
+              }
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
             >
               {isPending ? (

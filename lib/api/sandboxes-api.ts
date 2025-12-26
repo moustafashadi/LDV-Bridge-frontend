@@ -44,7 +44,8 @@ export const sandboxesApi = {
   ): Promise<Sandbox> {
     const response = await apiClient.post<Sandbox>(
       `${SANDBOXES_BASE}/feature`,
-      data
+      data,
+      { timeout: 600000 } //longer timeout
     );
     return response.data;
   },

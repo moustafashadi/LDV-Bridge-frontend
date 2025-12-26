@@ -46,6 +46,17 @@ import { useAppCreationProgress } from "@/hooks/use-app-creation-progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+// Validation constants matching backend DTOs
+// CreateMendixAppDto validation
+const MENDIX_APP_NAME_MIN_LENGTH = 1;
+const MENDIX_APP_NAME_MAX_LENGTH = 100;
+const MENDIX_APP_NAME_PATTERN = /^[a-zA-Z0-9\s\-_]+$/;
+const MENDIX_DESCRIPTION_MAX_LENGTH = 500;
+
+// LinkExistingEnvironmentDto validation
+const LINK_NAME_MIN_LENGTH = 3;
+const LINK_NAME_MAX_LENGTH = 100;
+
 // Step icons for app creation progress
 const STEP_ICONS: Record<number, React.ReactNode> = {
   1: <Settings className="w-4 h-4" />,
@@ -129,21 +140,46 @@ export function CreateSandboxModal({
 
     // Create App tab validation (Mendix only)
     if (activeTab === "create-app") {
-      if (!mendixAppForm.name.trim()) {
+      const trimmedName = mendixAppForm.name.trim();
+
+      if (!trimmedName) {
         newErrors.mendixAppName = "App name is required";
+      } else if (trimmedName.length < MENDIX_APP_NAME_MIN_LENGTH) {
+        newErrors.mendixAppName = `App name must be at least ${MENDIX_APP_NAME_MIN_LENGTH} character`;
+      } else if (trimmedName.length > MENDIX_APP_NAME_MAX_LENGTH) {
+        newErrors.mendixAppName = `App name must be at most ${MENDIX_APP_NAME_MAX_LENGTH} characters`;
+      } else if (!MENDIX_APP_NAME_PATTERN.test(trimmedName)) {
+        newErrors.mendixAppName =
+          "App name can only contain letters, numbers, spaces, hyphens, and underscores";
       }
+
+      // Description validation
+      if (
+        mendixAppForm.description &&
+        mendixAppForm.description.length > MENDIX_DESCRIPTION_MAX_LENGTH
+      ) {
+        newErrors.mendixAppDescription = `Description must be at most ${MENDIX_DESCRIPTION_MAX_LENGTH} characters`;
+      }
+
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
     }
 
-    // For link tab, name is required
-    if (activeTab === "link" && !formData.name.trim()) {
-      newErrors.name = "Environment name is required";
-    }
+    // Link tab validation
+    if (activeTab === "link") {
+      const trimmedName = formData.name.trim();
 
-    // Link tab specific validation - platform is always POWERAPPS
-    if (activeTab === "link" && !formData.environmentId) {
-      newErrors.environment = "Please select an environment to link";
+      if (!trimmedName) {
+        newErrors.name = "Workspace name is required";
+      } else if (trimmedName.length < LINK_NAME_MIN_LENGTH) {
+        newErrors.name = `Workspace name must be at least ${LINK_NAME_MIN_LENGTH} characters`;
+      } else if (trimmedName.length > LINK_NAME_MAX_LENGTH) {
+        newErrors.name = `Workspace name must be at most ${LINK_NAME_MAX_LENGTH} characters`;
+      }
+
+      if (!formData.environmentId) {
+        newErrors.environment = "Please select an environment to link";
+      }
     }
 
     setErrors(newErrors);
@@ -590,12 +626,32 @@ export function CreateSandboxModal({
                         errors.mendixAppName ? "border-red-500" : ""
                       }`}
                       disabled={isMendixCreating}
+                      maxLength={MENDIX_APP_NAME_MAX_LENGTH}
                     />
-                    {errors.mendixAppName && (
-                      <p className="text-sm text-red-500">
-                        {errors.mendixAppName}
-                      </p>
-                    )}
+                    <div className="flex justify-between items-center">
+                      {errors.mendixAppName ? (
+                        <p className="text-sm text-red-400">
+                          {errors.mendixAppName}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-slate-500">
+                          Letters, numbers, spaces, hyphens, and underscores
+                          only
+                        </p>
+                      )}
+                      <span
+                        className={`text-xs ${
+                          MENDIX_APP_NAME_MAX_LENGTH -
+                            mendixAppForm.name.length <
+                          20
+                            ? "text-amber-400"
+                            : "text-slate-500"
+                        }`}
+                      >
+                        {MENDIX_APP_NAME_MAX_LENGTH - mendixAppForm.name.length}{" "}
+                        chars left
+                      </span>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -609,15 +665,44 @@ export function CreateSandboxModal({
                       id="mendix-app-description"
                       placeholder="Describe what this app will be used for..."
                       value={mendixAppForm.description}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setMendixAppForm((prev) => ({
                           ...prev,
                           description: e.target.value,
-                        }))
-                      }
-                      className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 min-h-20"
+                        }));
+                        setErrors((prev) => ({
+                          ...prev,
+                          mendixAppDescription: "",
+                        }));
+                      }}
+                      className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 min-h-20 ${
+                        errors.mendixAppDescription ? "border-red-500" : ""
+                      }`}
                       disabled={isMendixCreating}
+                      maxLength={MENDIX_DESCRIPTION_MAX_LENGTH}
                     />
+                    <div className="flex justify-between items-center">
+                      {errors.mendixAppDescription ? (
+                        <p className="text-sm text-red-400">
+                          {errors.mendixAppDescription}
+                        </p>
+                      ) : (
+                        <span />
+                      )}
+                      <span
+                        className={`text-xs ${
+                          MENDIX_DESCRIPTION_MAX_LENGTH -
+                            mendixAppForm.description.length <
+                          50
+                            ? "text-amber-400"
+                            : "text-slate-500"
+                        }`}
+                      >
+                        {MENDIX_DESCRIPTION_MAX_LENGTH -
+                          mendixAppForm.description.length}{" "}
+                        chars left
+                      </span>
+                    </div>
                   </div>
 
                   <Alert className="bg-slate-700/50 border-slate-600">
@@ -744,13 +829,27 @@ export function CreateSandboxModal({
                   className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 ${
                     errors.name ? "border-red-500" : ""
                   }`}
+                  maxLength={LINK_NAME_MAX_LENGTH}
                 />
-                {errors.name && (
-                  <p className="text-sm text-red-500">{errors.name}</p>
-                )}
-                <p className="text-xs text-slate-400">
-                  Display name for this workspace in LDV-Bridge
-                </p>
+                <div className="flex justify-between items-center">
+                  {errors.name ? (
+                    <p className="text-sm text-red-400">{errors.name}</p>
+                  ) : (
+                    <p className="text-xs text-slate-500">
+                      Display name for this workspace in LDV-Bridge (min{" "}
+                      {LINK_NAME_MIN_LENGTH} chars)
+                    </p>
+                  )}
+                  <span
+                    className={`text-xs ${
+                      LINK_NAME_MAX_LENGTH - formData.name.length < 20
+                        ? "text-amber-400"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    {LINK_NAME_MAX_LENGTH - formData.name.length} chars left
+                  </span>
+                </div>
               </div>
 
               {/* Description */}
