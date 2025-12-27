@@ -36,11 +36,23 @@ export default function GitHubConnectorPage() {
   const { mutate: connectGitHub } = useConnectGitHub();
 
   // Handle callback from GitHub App installation
+  // GitHub sends: ?installation_id=XXX&setup_action=install
   useEffect(() => {
     const installationId = searchParams.get("installation_id");
-    const callbackStatus = searchParams.get("status");
+    const setupAction = searchParams.get("setup_action");
 
-    if (installationId && callbackStatus === "success" && !status?.connected) {
+    // Don't process if we're still loading the status or already connecting
+    if (isLoading || isConnecting) return;
+
+    // GitHub sends setup_action=install when the app is installed successfully
+    if (installationId && setupAction === "install") {
+      // Skip if already connected
+      if (status?.connected) {
+        toast.info("GitHub is already connected");
+        window.history.replaceState({}, "", "/admin/connectors/github");
+        return;
+      }
+
       setIsConnecting(true);
       toast.info("Connecting GitHub...", { duration: 2000 });
 
@@ -50,19 +62,32 @@ export default function GitHubConnectorPage() {
         {
           onSuccess: () => {
             setIsConnecting(false);
+            toast.success("GitHub connected successfully!");
             // Clean up URL params
             window.history.replaceState({}, "", "/admin/connectors/github");
+            // Refresh status
+            refetch();
           },
-          onError: () => {
+          onError: (error) => {
             setIsConnecting(false);
+            toast.error(`Failed to connect GitHub: ${error.message}`);
+            window.history.replaceState({}, "", "/admin/connectors/github");
           },
         }
       );
-    } else if (callbackStatus === "cancelled") {
-      toast.error("GitHub installation was cancelled");
+    } else if (setupAction === "request") {
+      // User requested access but doesn't have permission
+      toast.error("GitHub installation requires organization owner approval");
       window.history.replaceState({}, "", "/admin/connectors/github");
     }
-  }, [searchParams, status?.connected, connectGitHub]);
+  }, [
+    searchParams,
+    status?.connected,
+    isLoading,
+    isConnecting,
+    connectGitHub,
+    refetch,
+  ]);
 
   const handleConnect = () => {
     // The GitHub App installation URL
