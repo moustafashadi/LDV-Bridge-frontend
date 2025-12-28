@@ -311,6 +311,24 @@ export interface SandboxReviewDetails {
       branch: string;
       repository: string;
     } | null;
+    // AI analysis (if available)
+    aiAnalysis: {
+      id: string;
+      changeId: string;
+      analyzedAt: string;
+      provider?: string;
+      model?: string;
+      securityConcerns: Array<{
+        severity: "critical" | "high" | "medium" | "low" | "info";
+        category: string;
+        description: string;
+        affectedFiles?: string[];
+        remediation?: string;
+      }>;
+      overallAssessment: "safe" | "warning" | "critical";
+      summary: string;
+      recommendations: string[];
+    } | null;
   } | null;
   review: {
     id: string;

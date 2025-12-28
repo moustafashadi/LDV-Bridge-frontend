@@ -245,16 +245,17 @@ export default function ReviewDetailPage({
       console.error("Failed to fetch existing AI analysis:", err);
     }
   }, []);
-
   useEffect(() => {
     fetchAIStatus();
   }, [fetchAIStatus]);
 
+  // Load AI analysis from change data when available
   useEffect(() => {
-    if (data?.change?.id) {
-      fetchExistingAnalysis(data.change.id);
+    if (data?.change?.aiAnalysis) {
+      // Use the AI analysis that was already fetched with review details
+      setAiAnalysis(data.change.aiAnalysis as any);
     }
-  }, [data?.change?.id, fetchExistingAnalysis]);
+  }, [data?.change?.aiAnalysis]);
 
   // Handle BridgeAI analysis trigger
   const handleAnalyzeWithAI = async () => {
@@ -268,7 +269,7 @@ export default function ReviewDetailPage({
 
     try {
       const response = await analyzeChange(data.change.id);
-      setAiAnalysis(response.analysis);
+      setAiAnalysis(response);
       toast.success("BridgeAI analysis complete!");
     } catch (err: any) {
       console.error("AI analysis failed:", err);
@@ -1044,7 +1045,7 @@ export default function ReviewDetailPage({
                           {/* Overall AI Risk Assessment */}
                           <div
                             className={`p-4 rounded-lg border ${getRiskLevelColor(
-                              aiAnalysis.overallRiskLevel
+                              aiAnalysis.overallAssessment
                             )}`}
                           >
                             <div className="flex items-center justify-between mb-2">
@@ -1052,7 +1053,7 @@ export default function ReviewDetailPage({
                                 <Sparkles className="w-4 h-4" />
                                 <span className="font-semibold">
                                   AI Risk Level:{" "}
-                                  {aiAnalysis.overallRiskLevel.toUpperCase()}
+                                  {aiAnalysis.overallAssessment.toUpperCase()}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 text-xs text-slate-400">
@@ -1107,7 +1108,7 @@ export default function ReviewDetailPage({
                                           <span className="font-semibold text-slate-300">
                                             Recommendation:{" "}
                                           </span>
-                                          {concern.recommendation}
+                                          {concern.remediation}
                                         </p>
                                       </div>
                                     </div>

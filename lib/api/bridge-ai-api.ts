@@ -9,7 +9,7 @@ import { apiClient } from "./client";
 // Types
 // ============================================
 
-export type AIProviderName = "anthropic" | "openai" | "gemini";
+export type AIProviderName = "anthropic" | "openai" | "gemini" | "groq";
 
 export interface AIProviderInfo {
   name: AIProviderName;
@@ -34,9 +34,8 @@ export interface SecurityConcern {
   category: string;
   description: string;
   location?: string;
-  recommendation: string;
-  affectedFiles?: string[];
   remediation?: string;
+  affectedFiles?: string[];
 }
 
 export interface AIAnalysisResult {
