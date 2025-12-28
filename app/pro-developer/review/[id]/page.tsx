@@ -48,7 +48,104 @@ import {
   GitBranch,
   GitCommit,
   ExternalLink,
+  SplitSquareHorizontal,
+  AlignJustify,
 } from "lucide-react";
+
+// Helper to parse unified diff into split view format
+interface DiffLine {
+  type: "added" | "removed" | "context" | "header";
+  content: string;
+  leftLineNum?: number;
+  rightLineNum?: number;
+}
+
+interface SplitDiffLine {
+  left: DiffLine | null;
+  right: DiffLine | null;
+}
+
+function parseUnifiedDiffToSplit(rawDiff: string): SplitDiffLine[] {
+  const lines = rawDiff.split("\n");
+  const result: SplitDiffLine[] = [];
+  let leftLineNum = 0;
+  let rightLineNum = 0;
+
+  const pendingRemovals: DiffLine[] = [];
+  const pendingAdditions: DiffLine[] = [];
+
+  const flushPending = () => {
+    const maxLen = Math.max(pendingRemovals.length, pendingAdditions.length);
+    for (let i = 0; i < maxLen; i++) {
+      result.push({
+        left: pendingRemovals[i] || null,
+        right: pendingAdditions[i] || null,
+      });
+    }
+    pendingRemovals.length = 0;
+    pendingAdditions.length = 0;
+  };
+
+  for (const line of lines) {
+    if (
+      line.startsWith("diff --git") ||
+      line.startsWith("index ") ||
+      line.startsWith("---") ||
+      line.startsWith("+++")
+    ) {
+      flushPending();
+      result.push({
+        left: { type: "header", content: line },
+        right: { type: "header", content: "" },
+      });
+    } else if (line.startsWith("@@")) {
+      flushPending();
+      // Parse line numbers from @@ -a,b +c,d @@
+      const match = line.match(/@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+      if (match) {
+        leftLineNum = parseInt(match[1], 10) - 1;
+        rightLineNum = parseInt(match[2], 10) - 1;
+      }
+      result.push({
+        left: { type: "header", content: line },
+        right: { type: "header", content: "" },
+      });
+    } else if (line.startsWith("-") && !line.startsWith("---")) {
+      leftLineNum++;
+      pendingRemovals.push({
+        type: "removed",
+        content: line.substring(1),
+        leftLineNum,
+      });
+    } else if (line.startsWith("+") && !line.startsWith("+++")) {
+      rightLineNum++;
+      pendingAdditions.push({
+        type: "added",
+        content: line.substring(1),
+        rightLineNum,
+      });
+    } else {
+      flushPending();
+      leftLineNum++;
+      rightLineNum++;
+      result.push({
+        left: {
+          type: "context",
+          content: line.startsWith(" ") ? line.substring(1) : line,
+          leftLineNum,
+        },
+        right: {
+          type: "context",
+          content: line.startsWith(" ") ? line.substring(1) : line,
+          rightLineNum,
+        },
+      });
+    }
+  }
+
+  flushPending();
+  return result;
+}
 
 // Helper to get risk level from score
 function getRiskLevel(
@@ -100,6 +197,11 @@ export default function ReviewDetailPage({
 
   // Diff view mode: 'json' for model JSON, 'raw' for raw GitHub diff
   const [diffViewMode, setDiffViewMode] = useState<"json" | "raw">("json");
+
+  // Raw diff display mode: 'unified' or 'split' view
+  const [rawDiffDisplayMode, setRawDiffDisplayMode] = useState<
+    "unified" | "split"
+  >("unified");
 
   // Fetch review details
   const fetchData = useCallback(async () => {
@@ -580,44 +682,158 @@ export default function ReviewDetailPage({
                           ) : diffSummary?.rawDiff ? (
                             // Fallback to rawDiff from diffSummary if beforeCode/afterCode not available
                             <div className="text-slate-300">
-                              <div className="text-xs text-slate-500 mb-2">
+                              <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
                                 <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">
-                                  Unified Diff
+                                  {rawDiffDisplayMode === "unified"
+                                    ? "Unified Diff"
+                                    : "Split Diff"}
                                 </span>
-                              </div>
-                              <div className="bg-slate-800 rounded p-2 border border-slate-700">
-                                {diffSummary.rawDiff
-                                  .split("\n")
-                                  .map((line: string, idx: number) => {
-                                    let lineClass = "text-slate-400";
-                                    if (
-                                      line.startsWith("+") &&
-                                      !line.startsWith("+++")
-                                    ) {
-                                      lineClass =
-                                        "text-green-400 bg-green-900/20";
-                                    } else if (
-                                      line.startsWith("-") &&
-                                      !line.startsWith("---")
-                                    ) {
-                                      lineClass = "text-red-400 bg-red-900/20";
-                                    } else if (line.startsWith("@@")) {
-                                      lineClass =
-                                        "text-blue-400 bg-blue-900/20";
-                                    } else if (line.startsWith("diff --git")) {
-                                      lineClass =
-                                        "text-yellow-400 font-bold mt-4";
+                                {/* Unified/Split Toggle */}
+                                <div className="flex items-center gap-1 bg-slate-900 rounded p-0.5">
+                                  <button
+                                    onClick={() =>
+                                      setRawDiffDisplayMode("unified")
                                     }
-                                    return (
-                                      <div
-                                        key={idx}
-                                        className={`${lineClass} text-xs leading-relaxed font-mono`}
-                                      >
-                                        {line || " "}
-                                      </div>
-                                    );
-                                  })}
+                                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                                      rawDiffDisplayMode === "unified"
+                                        ? "bg-blue-600 text-white"
+                                        : "text-slate-400 hover:text-white"
+                                    }`}
+                                    title="Unified view"
+                                  >
+                                    <AlignJustify className="w-3 h-3" />
+                                    Unified
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      setRawDiffDisplayMode("split")
+                                    }
+                                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                                      rawDiffDisplayMode === "split"
+                                        ? "bg-blue-600 text-white"
+                                        : "text-slate-400 hover:text-white"
+                                    }`}
+                                    title="Split view"
+                                  >
+                                    <SplitSquareHorizontal className="w-3 h-3" />
+                                    Split
+                                  </button>
+                                </div>
                               </div>
+
+                              {rawDiffDisplayMode === "unified" ? (
+                                // Unified diff view
+                                <div className="bg-slate-800 rounded p-2 border border-slate-700">
+                                  {diffSummary.rawDiff
+                                    .split("\n")
+                                    .map((line: string, idx: number) => {
+                                      let lineClass = "text-slate-400";
+                                      if (
+                                        line.startsWith("+") &&
+                                        !line.startsWith("+++")
+                                      ) {
+                                        lineClass =
+                                          "text-green-400 bg-green-900/20";
+                                      } else if (
+                                        line.startsWith("-") &&
+                                        !line.startsWith("---")
+                                      ) {
+                                        lineClass =
+                                          "text-red-400 bg-red-900/20";
+                                      } else if (line.startsWith("@@")) {
+                                        lineClass =
+                                          "text-blue-400 bg-blue-900/20";
+                                      } else if (
+                                        line.startsWith("diff --git")
+                                      ) {
+                                        lineClass =
+                                          "text-yellow-400 font-bold mt-4";
+                                      }
+                                      return (
+                                        <div
+                                          key={idx}
+                                          className={`${lineClass} text-xs leading-relaxed font-mono`}
+                                        >
+                                          {line || " "}
+                                        </div>
+                                      );
+                                    })}
+                                </div>
+                              ) : (
+                                // Split diff view
+                                <div className="bg-slate-800 rounded border border-slate-700 overflow-x-auto">
+                                  <div className="grid grid-cols-2 divide-x divide-slate-700">
+                                    {/* Left header */}
+                                    <div className="px-2 py-1 bg-red-900/20 text-red-400 text-xs font-semibold border-b border-slate-700">
+                                      Before (Removed)
+                                    </div>
+                                    {/* Right header */}
+                                    <div className="px-2 py-1 bg-green-900/20 text-green-400 text-xs font-semibold border-b border-slate-700">
+                                      After (Added)
+                                    </div>
+                                  </div>
+                                  {parseUnifiedDiffToSplit(
+                                    diffSummary.rawDiff
+                                  ).map((row, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="grid grid-cols-2 divide-x divide-slate-700"
+                                    >
+                                      {/* Left side */}
+                                      <div
+                                        className={`px-2 py-0.5 text-xs font-mono min-h-[1.5rem] ${
+                                          row.left?.type === "removed"
+                                            ? "bg-red-900/20 text-red-400"
+                                            : row.left?.type === "header"
+                                            ? "bg-slate-900 text-yellow-400"
+                                            : row.left?.type === "context"
+                                            ? "text-slate-400"
+                                            : "text-slate-600"
+                                        }`}
+                                      >
+                                        {row.left && (
+                                          <span className="flex">
+                                            {row.left.leftLineNum && (
+                                              <span className="text-slate-600 select-none w-8 shrink-0">
+                                                {row.left.leftLineNum}
+                                              </span>
+                                            )}
+                                            <span className="whitespace-pre">
+                                              {row.left.content || " "}
+                                            </span>
+                                          </span>
+                                        )}
+                                      </div>
+                                      {/* Right side */}
+                                      <div
+                                        className={`px-2 py-0.5 text-xs font-mono min-h-[1.5rem] ${
+                                          row.right?.type === "added"
+                                            ? "bg-green-900/20 text-green-400"
+                                            : row.right?.type === "header"
+                                            ? "bg-slate-900 text-yellow-400"
+                                            : row.right?.type === "context"
+                                            ? "text-slate-400"
+                                            : "text-slate-600"
+                                        }`}
+                                      >
+                                        {row.right &&
+                                          row.right.type !== "header" && (
+                                            <span className="flex">
+                                              {row.right.rightLineNum && (
+                                                <span className="text-slate-600 select-none w-8 shrink-0">
+                                                  {row.right.rightLineNum}
+                                                </span>
+                                              )}
+                                              <span className="whitespace-pre">
+                                                {row.right.content || " "}
+                                              </span>
+                                            </span>
+                                          )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div className="text-center py-8">
