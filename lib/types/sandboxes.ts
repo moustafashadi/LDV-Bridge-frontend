@@ -275,13 +275,42 @@ export interface SandboxReviewDetails {
       additions?: number;
       deletions?: number;
       modifications?: number;
+      rawDiff?: string;
+      added?: number;
+      modified?: number;
+      deleted?: number;
+      categories?: {
+        pages?: number;
+        microflows?: number;
+        nanoflows?: number;
+        domainModels?: number;
+        integrations?: number;
+        resources?: number;
+        other?: number;
+      };
+      files?: Array<{
+        path: string;
+        status: string;
+        additions: number;
+        deletions: number;
+      }>;
     } | null;
     beforeMetadata: any;
     afterMetadata: any;
+    beforeCode: string | null;
+    afterCode: string | null;
     pipelineStatus: string | null;
     pipelineUrl: string | null;
     pipelineResults: any;
     createdAt: string;
+    // Git commit info for GitHub links
+    gitCommit: {
+      commitSha: string;
+      commitUrl: string | null;
+      commitMessage: string;
+      branch: string;
+      repository: string;
+    } | null;
   } | null;
   review: {
     id: string;

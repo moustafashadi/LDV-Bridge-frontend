@@ -25,9 +25,30 @@ import {
   requestChanges,
   createComment,
 } from "@/lib/api/reviews-api";
+import {
+  getBridgeAIStatus,
+  analyzeChange,
+  getChangeAnalysis,
+  getSeverityColor,
+  getRiskLevelColor,
+  type BridgeAIStatus,
+  type AIAnalysisResult,
+} from "@/lib/api/bridge-ai-api";
 import type { SandboxReviewDetails } from "@/lib/types/sandboxes";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import {
+  Sparkles,
+  Bot,
+  RefreshCw,
+  Clock,
+  Zap,
+  Code,
+  FileJson,
+  GitBranch,
+  GitCommit,
+  ExternalLink,
+} from "lucide-react";
 
 // Helper to get risk level from score
 function getRiskLevel(
@@ -71,6 +92,15 @@ export default function ReviewDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // BridgeAI state
+  const [aiStatus, setAiStatus] = useState<BridgeAIStatus | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  // Diff view mode: 'json' for model JSON, 'raw' for raw GitHub diff
+  const [diffViewMode, setDiffViewMode] = useState<"json" | "raw">("json");
+
   // Fetch review details
   const fetchData = useCallback(async () => {
     try {
@@ -90,6 +120,64 @@ export default function ReviewDetailPage({
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Fetch BridgeAI status and existing analysis
+  const fetchAIStatus = useCallback(async () => {
+    try {
+      const status = await getBridgeAIStatus();
+      setAiStatus(status);
+    } catch (err) {
+      console.error("Failed to fetch AI status:", err);
+      // Non-blocking - AI is optional
+    }
+  }, []);
+
+  const fetchExistingAnalysis = useCallback(async (changeId: string) => {
+    try {
+      const response = await getChangeAnalysis(changeId);
+      if (response.analysis) {
+        setAiAnalysis(response.analysis);
+      }
+    } catch (err) {
+      // Non-blocking - no existing analysis is fine
+      console.error("Failed to fetch existing AI analysis:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAIStatus();
+  }, [fetchAIStatus]);
+
+  useEffect(() => {
+    if (data?.change?.id) {
+      fetchExistingAnalysis(data.change.id);
+    }
+  }, [data?.change?.id, fetchExistingAnalysis]);
+
+  // Handle BridgeAI analysis trigger
+  const handleAnalyzeWithAI = async () => {
+    if (!data?.change?.id) {
+      toast.error("No change data available for analysis");
+      return;
+    }
+
+    setAiLoading(true);
+    setAiError(null);
+
+    try {
+      const response = await analyzeChange(data.change.id);
+      setAiAnalysis(response.analysis);
+      toast.success("BridgeAI analysis complete!");
+    } catch (err: any) {
+      console.error("AI analysis failed:", err);
+      const errorMsg =
+        err.response?.data?.message || "Failed to analyze with BridgeAI";
+      setAiError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   // Action handlers
   const handleApprove = async () => {
@@ -328,9 +416,37 @@ export default function ReviewDetailPage({
                   <CardContent className="p-6">
                     {change ? (
                       <>
-                        <h3 className="text-lg font-semibold text-white mb-4">
-                          {change.title}
-                        </h3>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-white">
+                            {change.title}
+                          </h3>
+                          {/* View Mode Toggle */}
+                          <div className="flex items-center gap-2 bg-slate-900 rounded-lg p-1">
+                            <button
+                              onClick={() => setDiffViewMode("json")}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors ${
+                                diffViewMode === "json"
+                                  ? "bg-blue-600 text-white"
+                                  : "text-slate-400 hover:text-white"
+                              }`}
+                            >
+                              <FileJson className="w-4 h-4" />
+                              Model JSON
+                            </button>
+                            <button
+                              onClick={() => setDiffViewMode("raw")}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors ${
+                                diffViewMode === "raw"
+                                  ? "bg-blue-600 text-white"
+                                  : "text-slate-400 hover:text-white"
+                              }`}
+                            >
+                              <Code className="w-4 h-4" />
+                              Raw Diff
+                            </button>
+                          </div>
+                        </div>
+
                         {change.description && (
                           <p className="text-slate-400 mb-4">
                             {change.description}
@@ -355,25 +471,164 @@ export default function ReviewDetailPage({
                           </div>
                         )}
 
-                        {/* Visual representation */}
+                        {/* GitHub Link */}
+                        {app?.githubRepoUrl && sandbox?.githubBranch && (
+                          <div className="flex items-center gap-2 mb-4">
+                            <a
+                              href={`${app.githubRepoUrl}/tree/${sandbox.githubBranch}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300"
+                            >
+                              <GitBranch className="w-4 h-4" />
+                              View Branch on GitHub
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                            {change.gitCommit?.commitSha && (
+                              <a
+                                href={
+                                  change.gitCommit.commitUrl ||
+                                  `${app.githubRepoUrl}/commit/${change.gitCommit.commitSha}`
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-300 ml-4"
+                              >
+                                <GitCommit className="w-4 h-4" />
+                                {change.gitCommit.commitSha.substring(0, 7)}
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Diff Content based on view mode */}
                         <div className="bg-slate-900 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-                          {change.beforeMetadata || change.afterMetadata ? (
-                            <div className="text-slate-400">
-                              <pre className="whitespace-pre-wrap">
-                                {JSON.stringify(
-                                  {
-                                    before: change.beforeMetadata,
-                                    after: change.afterMetadata,
-                                  },
-                                  null,
-                                  2
-                                )}
-                              </pre>
+                          {diffViewMode === "json" ? (
+                            // Model JSON View
+                            change.beforeMetadata || change.afterMetadata ? (
+                              <div className="text-slate-400">
+                                <pre className="whitespace-pre-wrap">
+                                  {JSON.stringify(
+                                    {
+                                      before: change.beforeMetadata,
+                                      after: change.afterMetadata,
+                                    },
+                                    null,
+                                    2
+                                  )}
+                                </pre>
+                              </div>
+                            ) : (
+                              <p className="text-slate-500 text-center py-8">
+                                No model metadata available
+                              </p>
+                            )
+                          ) : // Raw Code Diff View (beforeCode vs afterCode)
+                          change.beforeCode || change.afterCode ? (
+                            <div className="text-slate-300">
+                              {/* Show unified diff-style view */}
+                              {change.beforeCode && (
+                                <div className="mb-4">
+                                  <div className="text-xs text-slate-500 mb-2 flex items-center gap-2">
+                                    <span className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded">
+                                      Before
+                                    </span>
+                                  </div>
+                                  <div className="bg-red-900/10 rounded p-2 border border-red-900/30">
+                                    {change.beforeCode
+                                      .split("\n")
+                                      .map((line: string, idx: number) => (
+                                        <div
+                                          key={`before-${idx}`}
+                                          className="text-red-300/80 text-xs leading-relaxed"
+                                        >
+                                          <span className="text-red-500/50 select-none mr-2">
+                                            {String(idx + 1).padStart(3, " ")}
+                                          </span>
+                                          {line || " "}
+                                        </div>
+                                      ))}
+                                  </div>
+                                </div>
+                              )}
+                              {change.afterCode && (
+                                <div>
+                                  <div className="text-xs text-slate-500 mb-2 flex items-center gap-2">
+                                    <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
+                                      After
+                                    </span>
+                                  </div>
+                                  <div className="bg-green-900/10 rounded p-2 border border-green-900/30">
+                                    {change.afterCode
+                                      .split("\n")
+                                      .map((line: string, idx: number) => (
+                                        <div
+                                          key={`after-${idx}`}
+                                          className="text-green-300/80 text-xs leading-relaxed"
+                                        >
+                                          <span className="text-green-500/50 select-none mr-2">
+                                            {String(idx + 1).padStart(3, " ")}
+                                          </span>
+                                          {line || " "}
+                                        </div>
+                                      ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : diffSummary?.rawDiff ? (
+                            // Fallback to rawDiff from diffSummary if beforeCode/afterCode not available
+                            <div className="text-slate-300">
+                              <div className="text-xs text-slate-500 mb-2">
+                                <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">
+                                  Unified Diff
+                                </span>
+                              </div>
+                              <div className="bg-slate-800 rounded p-2 border border-slate-700">
+                                {diffSummary.rawDiff
+                                  .split("\n")
+                                  .map((line: string, idx: number) => {
+                                    let lineClass = "text-slate-400";
+                                    if (
+                                      line.startsWith("+") &&
+                                      !line.startsWith("+++")
+                                    ) {
+                                      lineClass =
+                                        "text-green-400 bg-green-900/20";
+                                    } else if (
+                                      line.startsWith("-") &&
+                                      !line.startsWith("---")
+                                    ) {
+                                      lineClass = "text-red-400 bg-red-900/20";
+                                    } else if (line.startsWith("@@")) {
+                                      lineClass =
+                                        "text-blue-400 bg-blue-900/20";
+                                    } else if (line.startsWith("diff --git")) {
+                                      lineClass =
+                                        "text-yellow-400 font-bold mt-4";
+                                    }
+                                    return (
+                                      <div
+                                        key={idx}
+                                        className={`${lineClass} text-xs leading-relaxed font-mono`}
+                                      >
+                                        {line || " "}
+                                      </div>
+                                    );
+                                  })}
+                              </div>
                             </div>
                           ) : (
-                            <p className="text-slate-500 text-center py-8">
-                              No detailed diff data available
-                            </p>
+                            <div className="text-center py-8">
+                              <Code className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                              <p className="text-slate-500">
+                                No raw code diff available
+                              </p>
+                              <p className="text-slate-600 text-xs mt-2">
+                                Raw code is captured during sync from GitHub
+                              </p>
+                            </div>
                           )}
                         </div>
 
@@ -433,11 +688,11 @@ export default function ReviewDetailPage({
                       }`}
                     >
                       {riskLevel === "low" ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
                       ) : riskLevel === "medium" ? (
-                        <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
                       ) : (
-                        <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                       )}
                       <div>
                         <p
@@ -502,6 +757,196 @@ export default function ReviewDetailPage({
                         </p>
                       </div>
                     )}
+
+                    {/* BridgeAI Security Analysis Section */}
+                    <div className="pt-6 border-t border-slate-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <Bot className="w-5 h-5 text-purple-400" />
+                          <h3 className="font-semibold text-white">
+                            BridgeAI Security Analysis
+                          </h3>
+                          <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">
+                            AI-Powered
+                          </span>
+                        </div>
+                        {aiStatus?.enabled && data?.change?.id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-purple-500/50 text-purple-300 hover:bg-purple-500/10"
+                            onClick={handleAnalyzeWithAI}
+                            disabled={aiLoading}
+                          >
+                            {aiLoading ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Analyzing...
+                              </>
+                            ) : aiAnalysis ? (
+                              <>
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Re-analyze
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-4 h-4 mr-2" />
+                                Analyze with BridgeAI
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* AI Status Check */}
+                      {!aiStatus?.enabled && (
+                        <div className="p-4 bg-slate-900 rounded border border-slate-700">
+                          <div className="flex items-center gap-2 text-slate-400">
+                            <Info className="w-4 h-4" />
+                            <p className="text-sm">
+                              BridgeAI is not configured. Contact your
+                              administrator to enable AI-powered security
+                              analysis.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* AI Error */}
+                      {aiError && (
+                        <div className="p-4 bg-red-900/20 rounded border border-red-700/50 mb-4">
+                          <div className="flex items-center gap-2 text-red-400">
+                            <AlertCircle className="w-4 h-4" />
+                            <p className="text-sm">{aiError}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* AI Analysis Results */}
+                      {aiAnalysis && (
+                        <div className="space-y-4">
+                          {/* Overall AI Risk Assessment */}
+                          <div
+                            className={`p-4 rounded-lg border ${getRiskLevelColor(
+                              aiAnalysis.overallRiskLevel
+                            )}`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <Sparkles className="w-4 h-4" />
+                                <span className="font-semibold">
+                                  AI Risk Level:{" "}
+                                  {aiAnalysis.overallRiskLevel.toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-slate-400">
+                                <Clock className="w-3 h-3" />
+                                {new Date(
+                                  aiAnalysis.analyzedAt
+                                ).toLocaleString()}
+                              </div>
+                            </div>
+                            <p className="text-sm text-slate-300">
+                              {aiAnalysis.summary}
+                            </p>
+                          </div>
+
+                          {/* Security Concerns */}
+                          {aiAnalysis.securityConcerns.length > 0 && (
+                            <div>
+                              <p className="font-semibold text-slate-300 mb-3">
+                                Security Concerns (
+                                {aiAnalysis.securityConcerns.length})
+                              </p>
+                              <div className="space-y-3">
+                                {aiAnalysis.securityConcerns.map(
+                                  (concern, idx) => (
+                                    <div
+                                      key={idx}
+                                      className={`p-4 rounded border ${getSeverityColor(
+                                        concern.severity
+                                      )}`}
+                                    >
+                                      <div className="flex items-start justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs font-bold uppercase px-2 py-0.5 rounded">
+                                            {concern.severity}
+                                          </span>
+                                          <span className="text-sm font-medium text-white">
+                                            {concern.category}
+                                          </span>
+                                        </div>
+                                        {concern.location && (
+                                          <span className="text-xs text-slate-400 font-mono">
+                                            {concern.location}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-sm text-slate-300 mb-2">
+                                        {concern.description}
+                                      </p>
+                                      <div className="flex items-start gap-2 p-2 bg-slate-800/50 rounded">
+                                        <Zap className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+                                        <p className="text-xs text-slate-400">
+                                          <span className="font-semibold text-slate-300">
+                                            Recommendation:{" "}
+                                          </span>
+                                          {concern.recommendation}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* AI Recommendations */}
+                          {aiAnalysis.recommendations.length > 0 && (
+                            <div>
+                              <p className="font-semibold text-slate-300 mb-3">
+                                Overall Recommendations
+                              </p>
+                              <ul className="space-y-2">
+                                {aiAnalysis.recommendations.map((rec, idx) => (
+                                  <li
+                                    key={idx}
+                                    className="flex items-start gap-2 p-3 bg-slate-900 rounded border border-slate-700"
+                                  >
+                                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
+                                    <span className="text-sm text-slate-300">
+                                      {rec}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Analysis Metadata */}
+                          <div className="flex items-center gap-4 pt-4 border-t border-slate-700 text-xs text-slate-500">
+                            <span>Model: {aiAnalysis.model}</span>
+                            <span>Tokens: {aiAnalysis.tokensUsed}</span>
+                            <span>Time: {aiAnalysis.analysisTimeMs}ms</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* No Analysis Yet */}
+                      {aiStatus?.enabled && !aiAnalysis && !aiLoading && (
+                        <div className="p-6 bg-slate-900 rounded border border-slate-700 border-dashed text-center">
+                          <Bot className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                          <p className="text-sm text-slate-400 mb-3">
+                            Click &quot;Analyze with BridgeAI&quot; to get
+                            AI-powered security insights
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            BridgeAI uses Anthropic Claude to analyze code
+                            changes and identify potential security issues
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
