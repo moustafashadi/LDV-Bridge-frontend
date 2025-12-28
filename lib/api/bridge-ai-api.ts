@@ -1,6 +1,6 @@
 // ============================================
 // BRIDGE AI API CLIENT
-// Anthropic Claude-powered security analysis
+// Multi-provider AI security analysis (Anthropic, OpenAI, Gemini)
 // ============================================
 
 import { apiClient } from "./client";
@@ -9,10 +9,23 @@ import { apiClient } from "./client";
 // Types
 // ============================================
 
+export type AIProviderName = "anthropic" | "openai" | "gemini";
+
+export interface AIProviderInfo {
+  name: AIProviderName;
+  available: boolean;
+  model: string;
+}
+
 export interface BridgeAIStatus {
   enabled: boolean;
-  provider: string;
+  providers: AIProviderInfo[];
+  activeProvider: {
+    name: AIProviderName;
+    model: string;
+  } | null;
   features: string[];
+  fallbackEnabled: boolean;
   message?: string;
 }
 
@@ -22,20 +35,22 @@ export interface SecurityConcern {
   description: string;
   location?: string;
   recommendation: string;
+  affectedFiles?: string[];
+  remediation?: string;
 }
 
 export interface AIAnalysisResult {
   id: string;
   changeId: string;
   analyzedAt: string;
-  provider: string;
-  model: string;
+  provider?: string;
+  model?: string;
   securityConcerns: SecurityConcern[];
-  overallRiskLevel: "critical" | "high" | "medium" | "low";
+  overallAssessment: "safe" | "warning" | "critical";
   summary: string;
   recommendations: string[];
-  tokensUsed: number;
-  analysisTimeMs: number;
+  tokensUsed?: number;
+  analysisTimeMs?: number;
 }
 
 export interface AnalyzeChangeResponse {
@@ -65,13 +80,15 @@ export async function getBridgeAIStatus(): Promise<BridgeAIStatus> {
 
 /**
  * Trigger AI analysis for a specific change
- * This will call Anthropic Claude to analyze the code diffs
+ * Supports multiple providers with automatic fallback
  */
 export async function analyzeChange(
-  changeId: string
-): Promise<AnalyzeChangeResponse> {
-  const response = await apiClient.post<AnalyzeChangeResponse>(
-    `${BASE_PATH}/analyze/${changeId}`
+  changeId: string,
+  preferredProvider?: AIProviderName
+): Promise<AIAnalysisResult> {
+  const params = preferredProvider ? `?provider=${preferredProvider}` : "";
+  const response = await apiClient.post<AIAnalysisResult>(
+    `${BASE_PATH}/analyze/${changeId}${params}`
   );
   return response.data;
 }
@@ -127,16 +144,14 @@ export function getSeverityLabel(
  * Get risk level color for overall assessment
  */
 export function getRiskLevelColor(
-  level: AIAnalysisResult["overallRiskLevel"]
+  level: AIAnalysisResult["overallAssessment"]
 ): string {
   switch (level) {
     case "critical":
       return "text-red-400 bg-red-900/20 border-red-700/50";
-    case "high":
-      return "text-orange-400 bg-orange-900/20 border-orange-700/50";
-    case "medium":
+    case "warning":
       return "text-yellow-400 bg-yellow-900/20 border-yellow-700/50";
-    case "low":
+    case "safe":
       return "text-green-400 bg-green-900/20 border-green-700/50";
     default:
       return "text-slate-400 bg-slate-900/20 border-slate-700/50";
