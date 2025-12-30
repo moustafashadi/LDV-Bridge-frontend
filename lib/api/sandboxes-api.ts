@@ -51,6 +51,59 @@ export const sandboxesApi = {
   },
 
   /**
+   * Create a PowerApps feature sandbox
+   * Creates dev environment, copies app, and creates GitHub branch
+   * @param data Feature sandbox creation data
+   * @returns Created sandbox with dev environment info
+   */
+  async createPowerAppsFeatureSandbox(
+    data: CreateFeatureSandboxRequest
+  ): Promise<Sandbox> {
+    const response = await apiClient.post<Sandbox>(
+      `${SANDBOXES_BASE}/powerapps/feature`,
+      data,
+      { timeout: 600000 } // Environment creation can take time
+    );
+    return response.data;
+  },
+
+  /**
+   * Sync a PowerApps feature sandbox
+   * Exports app from dev environment and commits to GitHub
+   * @param id Sandbox ID
+   * @param changeTitle Optional title for the change
+   * @returns Sync result with commit info
+   */
+  async syncPowerAppsSandbox(
+    id: string,
+    changeTitle?: string
+  ): Promise<SandboxSyncResult> {
+    const response = await apiClient.post<SandboxSyncResult>(
+      `${SANDBOXES_BASE}/${id}/powerapps/sync`,
+      { changeTitle },
+      { timeout: 300000 }
+    );
+    return response.data;
+  },
+
+  /**
+   * Merge a PowerApps feature sandbox to main
+   * Merges GitHub branch and cleans up dev environment
+   * @param id Sandbox ID
+   * @returns Merge result
+   */
+  async mergePowerAppsSandbox(
+    id: string
+  ): Promise<{ success: boolean; message: string; mergeCommitSha?: string }> {
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      mergeCommitSha?: string;
+    }>(`${SANDBOXES_BASE}/${id}/powerapps/merge`, {});
+    return response.data;
+  },
+
+  /**
    * Link an existing PowerApps/Mendix environment to LDV-Bridge
    * @param data Environment linking data
    * @returns Created sandbox record linked to existing environment
