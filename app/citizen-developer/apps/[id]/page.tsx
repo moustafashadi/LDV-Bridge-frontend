@@ -32,6 +32,7 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { ChangeTitleDialog } from "@/components/dialogs/change-title-dialog";
 import { FeatureSandboxDialog } from "@/components/sandboxes/feature-sandbox-dialog";
+import { PowerAppsFeatureSandboxDialog } from "@/components/sandboxes/powerapps-feature-sandbox-dialog";
 import { SandboxStatusCard } from "@/components/sandboxes/sandbox-status-card";
 
 interface AppDetailPageProps {
@@ -200,11 +201,15 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
                 Open in {app.platform === "POWERAPPS" ? "Power Apps" : "Mendix"}
               </Button>
             )}
-            {/* New Feature button for Mendix apps */}
-            {app.platform === "MENDIX" && (
+            {/* New Feature button for Mendix and PowerApps apps */}
+            {(app.platform === "MENDIX" || app.platform === "POWERAPPS") && (
               <Button
                 variant="outline"
-                className="border-green-600 text-green-400 hover:bg-green-900/20"
+                className={`${
+                  app.platform === "POWERAPPS"
+                    ? "border-purple-600 text-purple-400 hover:bg-purple-900/20"
+                    : "border-green-600 text-green-400 hover:bg-green-900/20"
+                }`}
                 onClick={() => setFeatureSandboxDialogOpen(true)}
               >
                 <GitBranch className="w-4 h-4 mr-2" />
@@ -435,13 +440,19 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
                   <p className="text-slate-400 mb-4">
                     No feature sandboxes created for this app yet
                   </p>
-                  {app.platform === "MENDIX" && (
+                  {(app.platform === "MENDIX" ||
+                    app.platform === "POWERAPPS") && (
                     <Button
-                      className="bg-gradient-to-r from-blue-500 to-purple-600"
+                      className={`bg-gradient-to-r ${
+                        app.platform === "POWERAPPS"
+                          ? "from-purple-500 to-pink-600"
+                          : "from-blue-500 to-purple-600"
+                      }`}
                       onClick={() => setFeatureSandboxDialogOpen(true)}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Create Feature Branch
+                      Create Feature{" "}
+                      {app.platform === "POWERAPPS" ? "Sandbox" : "Branch"}
                     </Button>
                   )}
                 </div>
@@ -495,14 +506,27 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
         error={syncError}
       />
 
-      {/* Feature Sandbox Dialog */}
-      <FeatureSandboxDialog
-        open={featureSandboxDialogOpen}
-        onOpenChange={setFeatureSandboxDialogOpen}
-        appId={id}
-        appName={app?.name || ""}
-        onSuccess={() => refetch()}
-      />
+      {/* Feature Sandbox Dialog - Mendix */}
+      {app?.platform === "MENDIX" && (
+        <FeatureSandboxDialog
+          open={featureSandboxDialogOpen}
+          onOpenChange={setFeatureSandboxDialogOpen}
+          appId={id}
+          appName={app?.name || ""}
+          onSuccess={() => refetch()}
+        />
+      )}
+
+      {/* Feature Sandbox Dialog - PowerApps */}
+      {app?.platform === "POWERAPPS" && (
+        <PowerAppsFeatureSandboxDialog
+          open={featureSandboxDialogOpen}
+          onOpenChange={setFeatureSandboxDialogOpen}
+          appId={id}
+          appName={app?.name || ""}
+          onSuccess={() => refetch()}
+        />
+      )}
     </RoleLayout>
   );
 }
