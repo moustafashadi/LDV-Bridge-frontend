@@ -185,6 +185,10 @@ export interface CreateMendixAppResponse {
  * - Deploys app via Deploy API
  * - Creates GitHub repository (if org has GitHub integration)
  * - Performs initial sync via Model SDK
+ *
+ * Note: This operation can take several minutes, so we use a 10-minute timeout
  */
 export const createMendixApp = (data: CreateMendixAppDto) =>
-  apiClient.post<CreateMendixAppResponse>(`/apps/mendix/create`, data);
+  apiClient.post<CreateMendixAppResponse>(`/apps/mendix/create`, data, {
+    timeout: 10 * 60 * 1000, // 10 minutes - app creation can take a while
+  });
