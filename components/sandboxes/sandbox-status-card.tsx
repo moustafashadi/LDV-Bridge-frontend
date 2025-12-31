@@ -51,6 +51,7 @@ import { useSyncProgress } from "@/hooks/use-sync-progress";
 interface SandboxStatusCardProps {
   sandbox: Sandbox;
   appId: string;
+  platform: "MENDIX" | "POWERAPPS";
   onViewDetails?: () => void;
 }
 
@@ -114,6 +115,7 @@ const statusConfig: Record<
 export function SandboxStatusCard({
   sandbox,
   appId,
+  platform,
   onViewDetails,
 }: SandboxStatusCardProps) {
   const queryClient = useQueryClient();
@@ -145,10 +147,13 @@ export function SandboxStatusCard({
     }
   }, [showSyncDialog]);
 
-  // Sync mutation
+  // Sync mutation - routes to correct API based on platform
+  const isPowerApps = platform === "POWERAPPS";
   const { mutate: syncSandbox, isPending: isSyncing } = useMutation({
     mutationFn: (changeTitle: string) =>
-      sandboxesApi.syncSandbox(sandbox.id, changeTitle),
+      isPowerApps
+        ? sandboxesApi.syncPowerAppsSandbox(sandbox.id, changeTitle)
+        : sandboxesApi.syncSandbox(sandbox.id, changeTitle),
     onMutate: () => {
       // Start listening for progress events when sync begins
       setSyncStarted(true);
@@ -398,8 +403,9 @@ export function SandboxStatusCard({
               Abandon Sandbox?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">
-              This will delete the branches in both Mendix Team Server and
-              GitHub. This action cannot be undone.
+              {isPowerApps
+                ? "This will delete the GitHub branch and clean up the dev environment. This action cannot be undone."
+                : "This will delete the branches in both Mendix Team Server and GitHub. This action cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -15,6 +15,7 @@ export interface SyncProgressEvent {
 
 export interface UseSyncProgressOptions {
   sandboxId: string;
+  platform?: "MENDIX" | "POWERAPPS";
   enabled?: boolean;
   onComplete?: (event: SyncProgressEvent) => void;
   onError?: (event: SyncProgressEvent) => void;

@@ -428,6 +428,7 @@ export default function AppDetailPage({ params }: AppDetailPageProps) {
                       key={sandbox.id}
                       sandbox={sandbox}
                       appId={id}
+                      platform={app.platform}
                       onViewDetails={() =>
                         router.push(`/citizen-developer/sandbox/${sandbox.id}`)
                       }
