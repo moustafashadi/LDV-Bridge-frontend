@@ -126,6 +126,8 @@ export interface CreateFeatureSandboxRequest {
   appId: string;
   featureName: string;
   description?: string;
+  /** Temporary ID for SSE progress tracking */
+  tempId?: string;
 }
 
 /**
