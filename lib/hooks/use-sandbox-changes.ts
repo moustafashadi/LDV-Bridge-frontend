@@ -2,19 +2,19 @@
 // SANDBOX CHANGES HOOK WITH WEBSOCKET SUPPORT
 // ============================================
 
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  getChanges, 
+import { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  getChanges,
   syncSandbox as apiSyncSandbox,
   undoChange as apiUndoChange,
-  restoreChange as apiRestoreChange
-} from '../api/changes-api';
-import { useWebSocket } from './use-websocket';
-import { ChangeStatus, ChangeType } from '../types/changes';
-import type { Change, ChangeFilters } from '../types/changes';
-import { toast } from 'sonner';
+  restoreChange as apiRestoreChange,
+} from "../api/changes-api";
+import { useWebSocket } from "./use-websocket";
+import { ChangeStatus, ChangeType } from "../types/changes";
+import type { Change, ChangeFilters } from "../types/changes";
+import { toast } from "sonner";
 
 interface UseSandboxChangesOptions {
   sandboxId: string;
@@ -29,7 +29,13 @@ interface GroupedChanges {
 }
 
 export function useSandboxChanges(options: UseSandboxChangesOptions) {
-  const { sandboxId, appId, enableRealTime = true, autoRefresh = true, refreshInterval = 120000 } = options;
+  const {
+    sandboxId,
+    appId,
+    enableRealTime = true,
+    autoRefresh = true,
+    refreshInterval = 120000,
+  } = options;
 
   const [changes, setChanges] = useState<Change[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +44,7 @@ export function useSandboxChanges(options: UseSandboxChangesOptions) {
 
   // WebSocket for real-time updates
   const { subscribe, on } = useWebSocket({
-    namespace: '/changes',
+    namespace: "/changes",
     autoConnect: enableRealTime,
   });
 
@@ -62,12 +68,12 @@ export function useSandboxChanges(options: UseSandboxChangesOptions) {
       };
 
       const response = await getChanges(filters);
-      setChanges(response.data);
+      setChanges(response.data || []);
     } catch (err: any) {
-      console.error('Failed to fetch changes:', err);
+      console.error("Failed to fetch changes:", err);
       setError(err);
-      toast.error('Failed to load changes', {
-        description: err.response?.data?.message || 'Please try again',
+      toast.error("Failed to load changes", {
+        description: err.response?.data?.message || "Please try again",
       });
     } finally {
       setLoading(false);
@@ -80,22 +86,22 @@ export function useSandboxChanges(options: UseSandboxChangesOptions) {
 
     try {
       setSyncing(true);
-      toast.info('Syncing changes...', {
-        description: 'Detecting changes from platform',
+      toast.info("Syncing changes...", {
+        description: "Detecting changes from platform",
       });
 
       const result = await apiSyncSandbox(sandboxId);
-      
+
       // Refresh changes after sync
       await fetchChanges();
 
-      toast.success('Sync completed', {
+      toast.success("Sync completed", {
         description: `${result.changeCount} change(s) detected`,
       });
     } catch (err: any) {
-      console.error('Failed to sync changes:', err);
-      toast.error('Sync failed', {
-        description: err.response?.data?.message || 'Please try again',
+      console.error("Failed to sync changes:", err);
+      toast.error("Sync failed", {
+        description: err.response?.data?.message || "Please try again",
       });
     } finally {
       setSyncing(false);
@@ -106,17 +112,17 @@ export function useSandboxChanges(options: UseSandboxChangesOptions) {
   const undoChange = useCallback(async (changeId: string) => {
     try {
       await apiUndoChange(changeId);
-      
-      // Remove from local state
-      setChanges(prev => prev.filter(c => c.id !== changeId));
 
-      toast.success('Change undone', {
-        description: 'You can restore it later if needed',
+      // Remove from local state
+      setChanges((prev) => prev.filter((c) => c.id !== changeId));
+
+      toast.success("Change undone", {
+        description: "You can restore it later if needed",
       });
     } catch (err: any) {
-      console.error('Failed to undo change:', err);
-      toast.error('Failed to undo change', {
-        description: err.response?.data?.message || 'Please try again',
+      console.error("Failed to undo change:", err);
+      toast.error("Failed to undo change", {
+        description: err.response?.data?.message || "Please try again",
       });
     }
   }, []);
@@ -125,45 +131,54 @@ export function useSandboxChanges(options: UseSandboxChangesOptions) {
   const restoreChange = useCallback(async (changeId: string) => {
     try {
       const restoredChange = await apiRestoreChange(changeId);
-      
-      // Add back to local state
-      setChanges(prev => [...prev, restoredChange]);
 
-      toast.success('Change restored', {
-        description: 'Change is active again',
+      // Add back to local state
+      setChanges((prev) => [...prev, restoredChange]);
+
+      toast.success("Change restored", {
+        description: "Change is active again",
       });
     } catch (err: any) {
-      console.error('Failed to restore change:', err);
-      toast.error('Failed to restore change', {
-        description: err.response?.data?.message || 'Please try again',
+      console.error("Failed to restore change:", err);
+      toast.error("Failed to restore change", {
+        description: err.response?.data?.message || "Please try again",
       });
     }
   }, []);
 
   // Discard all changes
   const discardAllChanges = useCallback(async () => {
+    if (!changes || changes.length === 0) {
+      toast.info("No changes to discard");
+      return;
+    }
+
     try {
       // Undo all pending changes
-      await Promise.all(changes.map(change => undoChange(change.id)));
+      await Promise.all(changes.map((change) => undoChange(change.id)));
 
-      toast.success('All changes discarded', {
+      toast.success("All changes discarded", {
         description: `${changes.length} changes removed`,
       });
     } catch (err: any) {
-      console.error('Failed to discard changes:', err);
-      toast.error('Failed to discard all changes', {
-        description: 'Some changes may still be active',
+      console.error("Failed to discard changes:", err);
+      toast.error("Failed to discard all changes", {
+        description: "Some changes may still be active",
       });
     }
   }, [changes, undoChange]);
 
   // Group changes by component name
   const groupedChanges = useMemo<GroupedChanges>(() => {
+    if (!changes || changes.length === 0) {
+      return {};
+    }
     return changes.reduce((groups, change) => {
       // Extract component name from metadata or title
-      const componentName = (change.metadata as any)?.componentName || 
-                           change.title ||
-                           'Unknown Component';
+      const componentName =
+        (change.metadata as any)?.componentName ||
+        change.title ||
+        "Unknown Component";
 
       if (!groups[componentName]) {
         groups[componentName] = [];
@@ -179,10 +194,12 @@ export function useSandboxChanges(options: UseSandboxChangesOptions) {
       modified: 0,
       added: 0,
       deleted: 0,
-      total: changes.length,
+      total: changes?.length || 0,
     };
 
-    changes.forEach(change => {
+    if (!changes) return stats;
+
+    changes.forEach((change) => {
       if (change.changeType === ChangeType.UPDATE) stats.modified++;
       else if (change.changeType === ChangeType.CREATE) stats.added++;
       else if (change.changeType === ChangeType.DELETE) stats.deleted++;
@@ -199,36 +216,36 @@ export function useSandboxChanges(options: UseSandboxChangesOptions) {
     const unsubscribe = subscribe({ room: sandboxId });
 
     // Listen for change events
-    const cleanup1 = on('change:detected', (data) => {
-      console.log('[Changes] New change detected:', data);
+    const cleanup1 = on("change:detected", (data) => {
+      console.log("[Changes] New change detected:", data);
       fetchChanges(); // Refresh changes
-      toast.info('New change detected', {
-        description: 'Sandbox updated',
+      toast.info("New change detected", {
+        description: "Sandbox updated",
       });
     });
 
-    const cleanup2 = on('change:updated', (data) => {
-      console.log('[Changes] Change updated:', data);
+    const cleanup2 = on("change:updated", (data) => {
+      console.log("[Changes] Change updated:", data);
       fetchChanges();
     });
 
-    const cleanup3 = on('change:deleted', (data) => {
-      console.log('[Changes] Change deleted:', data);
-      setChanges(prev => prev.filter(c => c.id !== data.changeId));
+    const cleanup3 = on("change:deleted", (data) => {
+      console.log("[Changes] Change deleted:", data);
+      setChanges((prev) => prev.filter((c) => c.id !== data.changeId));
     });
 
-    const cleanup4 = on('change:restored', (data) => {
-      console.log('[Changes] Change restored:', data);
+    const cleanup4 = on("change:restored", (data) => {
+      console.log("[Changes] Change restored:", data);
       fetchChanges();
     });
 
-    const cleanup5 = on('sync:started', () => {
-      console.log('[Changes] Sync started');
+    const cleanup5 = on("sync:started", () => {
+      console.log("[Changes] Sync started");
       setSyncing(true);
     });
 
-    const cleanup6 = on('sync:completed', (data) => {
-      console.log('[Changes] Sync completed:', data);
+    const cleanup6 = on("sync:completed", (data) => {
+      console.log("[Changes] Sync completed:", data);
       setSyncing(false);
       fetchChanges();
     });

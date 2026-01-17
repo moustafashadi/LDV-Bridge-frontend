@@ -67,6 +67,7 @@ export interface UserAppAccess {
   platform: PlatformType;
   status: AppStatus;
   version?: string | null;
+  externalId?: string | null;
   lastSyncedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;

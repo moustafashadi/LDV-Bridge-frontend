@@ -173,6 +173,7 @@ export function useSyncAppToLDVBridge(): UseMutationResult<
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: linkedEnvironmentKeys.all });
       queryClient.invalidateQueries({ queryKey: ["apps"] }); // Invalidate apps list
+      queryClient.invalidateQueries({ queryKey: ["my-apps"] }); // Invalidate my-apps for environment detail page
       toast.success(`App synced to LDV-Bridge!`, {
         description: `"${variables.appName}" is now being tracked. Changes will be detected automatically.`,
       });
